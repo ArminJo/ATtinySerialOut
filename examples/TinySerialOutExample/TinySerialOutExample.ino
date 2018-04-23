@@ -8,7 +8,7 @@
 #include <avr/pgmspace.h> // needed for PSTR()
 #include "TinySerialOut.h"
 
-#define VERSION "1.0"
+#define VERSION "0.9"
 
 #if (F_CPU != 1000000) &&  (F_CPU != 8000000)
 #error "F_CPU value must be 1000000 or 8000000."
@@ -16,18 +16,16 @@
 
 void setup(void) {
     initTXPin();
+    useCliSeiForStrings(true);
 
-    writeString("START\nVersion ");
-    writeString( VERSION);
-    writeString(" from  ");
-    writeString(__DATE__);
-    write1Start8Data1StopNoParity('\n');
-
-    uint8_t tOSCCAL = OSCCAL;
     /*
      * Example of using writeString_P()
      */
-    writeString_P(PSTR("Value of OSCCAL is:"));
+    writeString_P(PSTR("START\nVersion " VERSION " from  " __DATE__ "\n"));
+
+    uint8_t tOSCCAL = OSCCAL;
+
+    writeString("Value of OSCCAL is:");
     writeUnsignedByteHex(tOSCCAL);
 }
 

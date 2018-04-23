@@ -9,6 +9,16 @@
  *
  */
 
+//
+// ATMEL ATTINY85
+//
+//                                         +-\/-+
+//        PCINT5/!RESET/ADC0/dW (D5) PB5  1|    |8  Vcc
+// PCINT3/XTAL1/CLKI/!OC1B/ADC3 (D3) PB3  2|    |7  PB2 (D2) SCK/USCK/SCL/ADC1/T0/INT0/PCINT2
+//  PCINT4/XTAL2/CLKO/OC1B/ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1 / TX Debug output
+//                                   GND  4|    |5  PB0 (D0) MOSI/DI/SDA/AIN0/OC0A/!OC1A/AREF/PCINT0
+//                                         +----+
+
 #ifndef TINY_SERIAL_OUT_H_
 #define TINY_SERIAL_OUT_H_
 

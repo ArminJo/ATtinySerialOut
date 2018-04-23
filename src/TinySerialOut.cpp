@@ -492,9 +492,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 void writeString(const char * aStringPtr) {
     if (sUseCliSeiForStrings) {
         while (*aStringPtr != 0) {
-            cli();
             write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
-            sei();
         }
     } else {
         while (*aStringPtr != 0) {
@@ -511,11 +509,9 @@ void writeString_P(const char * aStringPtr) {
     // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
         if (sUseCliSeiForStrings) {
-            cli();
-        }
-        write1Start8Data1StopNoParityWithCliSei(tChar);
-        if (sUseCliSeiForStrings) {
-            sei();
+            write1Start8Data1StopNoParity(tChar);
+        } else {
+            write1Start8Data1StopNoParityWithCliSei(tChar);
         }
         tChar = pgm_read_byte_near((const uint8_t * ) ++aStringPtr);
     }
@@ -529,11 +525,9 @@ void writeString_E(const char * aStringPtr) {
     // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
         if (sUseCliSeiForStrings) {
-            cli();
-        }
-        write1Start8Data1StopNoParityWithCliSei(tChar);
-        if (sUseCliSeiForStrings) {
-            sei();
+            write1Start8Data1StopNoParity(tChar);
+        } else {
+            write1Start8Data1StopNoParityWithCliSei(tChar);
         }
         tChar = eeprom_read_byte((const uint8_t *) ++aStringPtr);
     }
@@ -547,9 +541,7 @@ void writeStringWithoutCliSei(const char * aStringPtr) {
 
 void writeStringWithCliSei(const char * aStringPtr) {
     while (*aStringPtr != 0) {
-        cli();
-        write1Start8Data1StopNoParity(*aStringPtr++);
-        sei();
+        write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
     }
 }
 
@@ -560,9 +552,7 @@ void writeStringSkipLeadingSpaces(const char * aStringPtr) {
     }
     if (sUseCliSeiForStrings) {
         while (*aStringPtr != 0) {
-            cli();
-            write1Start8Data1StopNoParity(*aStringPtr++);
-            sei();
+            write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
         }
     } else {
         while (*aStringPtr != 0) {

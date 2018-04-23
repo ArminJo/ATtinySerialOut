@@ -18,10 +18,10 @@
 
 /*
  * Change this, if you need another pin as serial output
- * or set it as Symbol
+ * or set it as Symbol like "-DTX_PIN PB2"
  */
 #ifndef TX_PIN
-#define TX_PIN     PB1 // use one of PB0 to PB4 (+PB5) here
+#define TX_PIN     PB1 // (Pin6 on Tiny85) - use one of PB0 to PB4 (+PB5) here
 #endif
 
 #define USE_115200BAUD // use bigger (+120 bytes for unrolled loop) but faster code

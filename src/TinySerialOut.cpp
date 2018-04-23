@@ -6,8 +6,9 @@
  * 26,04 cycles per bit, 260,4 per byte for 38400 baud
  * 8,680 cycles per bit, 86,8 per byte for 115200 baud
  *
- * For transmitting debug data over bit bang serial with 230400 baud for a TINY running on 8 MHz
- * 34.722 cycles per bit => 350 cycles per byte needed for 230400 baud
+ * 34.722 cycles per bit => 350 cycles per byte needed for 230400 baud for a TINY running on 8 MHz
+ *
+ * Uses PB1 / Pin6 on ATtiny85 as output. To change this modify line 24 in TinySerialOut.h or or set it as Symbol like "-DTX_PIN PB2".
  *
  * if you use the C Version: -> see USE_ASSEMBLER_VERSION
  *      In order to guarantee the correct timing, compile with Arduino standard settings or:

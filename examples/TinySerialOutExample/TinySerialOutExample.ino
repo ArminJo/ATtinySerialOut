@@ -15,6 +15,8 @@
 #endif
 
 void setup(void) {
+    initTXPin();
+
     writeString("START\nVersion ");
     writeString( VERSION);
     writeString(" from  ");

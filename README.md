@@ -8,7 +8,7 @@ Minimal bit-bang send serial
 To change the output pin, just modify line 24 in TinySerialOut.h. You will find the file in the Arduino IDE under "Sketch/Show Sketch Folder" (or Ctrl+K) and then in the TinySerialOut/src directory. Or set it as Symbol like "-DTX_PIN PB2".
 
 ## Download
- The actual version can be downloaded directly from GitHub [here] (https://github.com/ArminJo/ATtinySerialOut/blob/master/TinySerialOut.zip?raw=true)
+ The actual version can be downloaded directly from GitHub [here](https://github.com/ArminJo/ATtinySerialOut/blob/master/extras/TinySerialOut.zip?raw=true)
 
 C versions of code included for better understanding and to enable own modifications.
 In order to guarantee the correct timing, compile C version with Arduino standard settings or:

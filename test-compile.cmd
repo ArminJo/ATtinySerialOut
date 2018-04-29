@@ -1,2 +1,0 @@
-"C:\Users\Armin\AppData\Local\Arduino15\packages\arduino\tools\avr-gcc\4.9.2-atmel3.5.4-arduino2/bin/avr-gcc" -I"E:\arduino\hardware\arduino\avr\cores\arduino" -I"E:\arduino\hardware\arduino\avr\variants\standard" -c -g -Wall -Os -ffunction-sections -fdata-sections -mmcu=attiny85 -DF_CPU=1000000UL -MMD -o "TinySerialOut.o" "TinySerialOut.cpp"
-pause

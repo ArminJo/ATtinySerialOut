@@ -21,7 +21,7 @@ void setup(void) {
     /*
      * Example of using writeString_P()
      */
-    writeString_P(PSTR("START\nVersion " VERSION " from  " __DATE__ "\n"));
+    writeString_P(PSTR("START " __FILE__ "\r\nVersion " VERSION " from  " __DATE__ "\r\n"));
 
     uint8_t tOSCCAL = OSCCAL;
 

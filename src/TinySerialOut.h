@@ -18,7 +18,6 @@
 //  PCINT4/XTAL2/CLKO/OC1B/ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1 / TX Debug output
 //                                   GND  4|    |5  PB0 (D0) MOSI/DI/SDA/AIN0/OC0A/!OC1A/AREF/PCINT0
 //                                         +----+
-
 #ifndef TINY_SERIAL_OUT_H_
 #define TINY_SERIAL_OUT_H_
 
@@ -48,6 +47,16 @@ inline void initTXPin() {
 
 void write1Start8Data1StopNoParity(uint8_t aValue);
 inline void write1Start8Data1StopNoParityWithCliSei(uint8_t aValue) {
+    cli();
+    write1Start8Data1StopNoParity(aValue);
+    sei();
+}
+
+inline void writeValue(uint8_t aValue) {
+    write1Start8Data1StopNoParity(aValue);
+}
+
+inline void writeValueCli(uint8_t aValue) {
     cli();
     write1Start8Data1StopNoParity(aValue);
     sei();

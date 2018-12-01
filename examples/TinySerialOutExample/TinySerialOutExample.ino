@@ -8,25 +8,17 @@
 #include <avr/pgmspace.h> // needed for PSTR()
 #include "TinySerialOut.h"
 
-#define VERSION "0.9"
-
-#if (F_CPU != 1000000) &&  (F_CPU != 8000000)
-#error "F_CPU value must be 1000000 or 8000000."
-#endif
+#define VERSION "1.0"
 
 void setup(void) {
     initTXPin();
-    useCliSeiForStrings(true);
 
-    /*
-     * Example of using writeString_P()
-     */
-    writeString_P(PSTR("START " __FILE__ "\r\nVersion " VERSION " from  " __DATE__ "\r\n"));
+    writeString(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\n"));
 
     uint8_t tOSCCAL = OSCCAL;
 
     writeString("Value of OSCCAL is:");
-    writeUnsignedByteHex(tOSCCAL);
+    writeUnsignedByteHexWithPrefix(tOSCCAL);
 }
 
 void loop(void) {
@@ -36,8 +28,25 @@ void loop(void) {
      * Otherwise use writeUnsignedByteHexWithoutPrefix or writeUnsignedByteHex
      */
     write1Start8Data1StopNoParityWithCliSei('I');
-    writeUnsignedByte(tIndex); // 1 Byte output
-    //writeUnsignedByteHexWithoutPrefix(tIndex); // 2 Byte output
-    //writeUnsignedByteHex(tIndex); // 4 Byte output
+    writeBinary(tIndex);                    // 1 Byte binary output
+    writeUnsignedByte(tIndex);              // 1-3 Byte ASCII output
+    writeUnsignedByteHexWithPrefix(tIndex); // 4 Byte output
+    writeUnsignedByteHex(tIndex);           // 2 Byte output
     write1Start8Data1StopNoParityWithCliSei('\n');
+    /*
+     * Serial.print usage example
+     */
+    Serial.print("I=");
+    Serial.print((char) tIndex);
+    Serial.print(" | ");
+    Serial.print(tIndex);
+    Serial.print(" | ");
+    Serial.print(tIndex, HEX);
+    Serial.print(" | ");
+    Serial.printHex(tIndex);
+    Serial.print(" | ");
+    Serial.println(tIndex);
+
+    tIndex++;
+    delay(100);
 }

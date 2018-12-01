@@ -1,20 +1,15 @@
 /*
  * TinySerialOut.cpp
  *
- * For transmitting debug data over bit bang serial with 38400 baud for a TINY running on 1 MHz
+ * For transmitting debug data over bit bang serial with 115200 baud for 1/8/16 MHz ATtiny clock.
+ * For 1MHZ you can choose also 38400 baud (120 bytes smaller code size).
+ * For 8/16 MHz you can choose also 230400 baud (just faster).
  * 1 Start, 8 Data, 1 Stop, No Parity
- * 26,04 cycles per bit, 260,4 per byte for 38400 baud
- * 8,680 cycles per bit, 86,8 per byte for 115200 baud
  *
- * 34.722 cycles per bit => 350 cycles per byte needed for 230400 baud for a TINY running on 8 MHz
+ * Using PB2 // (Pin7 on Tiny85) as default TX pin to be compatible with digispark board
+ * To change the output pin, modify line 38 in TinySerialOut.h or or set it as compiler symbol like "-DTX_PIN PB1".
  *
- * Uses PB1 / Pin6 on ATtiny85 as output. To change this modify line 24 in TinySerialOut.h or or set it as Symbol like "-DTX_PIN PB2".
- *
- * if you use the C Version: -> see USE_ASSEMBLER_VERSION
- *      In order to guarantee the correct timing, compile with Arduino standard settings or:
- *      avr-g++ -I"C:\arduino\hardware\arduino\avr\cores\arduino" -I"C:\arduino\hardware\arduino\avr\variants\standard" -c -g -w -Os -ffunction-sections -fdata-sections -mmcu=attiny85 -DF_CPU=1000000UL -MMD -o "TinySerialOut.o" "TinySerialOut.cpp"
- *      Tested with Arduino 1.6.8 and 1.8.5/gcc4.9.2
- *      C Version does not work with AVR gcc7.3.0, since optimization is too bad
+ * Using the Serial.print commands needs 4 bytes extra for each call.
  *
  *
  *  Copyright (C) 2015-2018  Armin Joachimsmeyer
@@ -44,10 +39,6 @@
 #include <avr/eeprom.h>     // for eeprom_read_byte()
 #include <stdlib.h>         // for utoa() etc.
 
-// use assembler version of smaller code using loops (code size is 76 Byte including first call)
-// makes it independent of compiler optimizations
-#define USE_ASSEMBLER_VERSION
-
 #ifndef _NOP
 #define _NOP()  __asm__ volatile ("nop")
 #endif
@@ -57,34 +48,361 @@
 #endif
 
 /*
- * Used for writeStringSkipLeadingSpaces() and therefore all write<type>()
+ * Used for writeString() and therefore all write<type>() and print<type>
  */
-bool sUseCliSeiForStrings = false;
-void useCliSeiForStrings(bool aUseCliSeiForStrings) {
-    sUseCliSeiForStrings = aUseCliSeiForStrings;
+bool sUseCliSeiForWrite = true;
+void useCliSeiForStrings(bool aUseCliSeiForWrite) {
+    sUseCliSeiForWrite = aUseCliSeiForWrite;
 }
 
-#ifndef USE_ASSEMBLER_VERSION
 /*
- * Only multiple of 4 cycles are possible. Last loop is only 3 cycles. Setting of a4Microseconds is 2 cycles
- * 3 -> 13 cycles
- * 4 -> 17 cycles
- * 5 -> 21 cycles
- * 6 -> 25 cycles
+ * Write String residing in RAM
  */
+void writeString(const char * aStringPtr) {
+#ifndef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+    if (sUseCliSeiForWrite) {
+#endif
+        while (*aStringPtr != 0) {
+            write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
+        }
+#ifndef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+    } else {
+        while (*aStringPtr != 0) {
+            write1Start8Data1StopNoParity(*aStringPtr++);
+        }
+    }
+#endif
+}
+
+/*
+ * Write string residing in program space (FLASH)
+ */
+void writeString_P(const char * aStringPtr) {
+    uint8_t tChar = pgm_read_byte_near((const uint8_t * ) aStringPtr);
+// Comparing with 0xFF is safety net for wrong string pointer
+    while (tChar != 0 && tChar != 0xFF) {
+#ifdef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+        write1Start8Data1StopNoParityWithCliSei(tChar);
+#else
+        if (sUseCliSeiForWrite) {
+            write1Start8Data1StopNoParityWithCliSei(tChar);
+        } else {
+            write1Start8Data1StopNoParity(tChar);
+        }
+#endif
+        tChar = pgm_read_byte_near((const uint8_t * ) ++aStringPtr);
+    }
+}
+
+/*
+ * Write string residing in program space (FLASH)
+ */
+void writeString(const __FlashStringHelper * aStringPtr) {
+    PGM_P tPGMStringPtr = reinterpret_cast<PGM_P>(aStringPtr);
+    uint8_t tChar = pgm_read_byte_near((const uint8_t * ) aStringPtr);
+// Comparing with 0xFF is safety net for wrong string pointer
+    while (tChar != 0 && tChar != 0xFF) {
+#ifdef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+        write1Start8Data1StopNoParityWithCliSei(tChar);
+#else
+        if (sUseCliSeiForWrite) {
+            write1Start8Data1StopNoParityWithCliSei(tChar);
+        } else {
+            write1Start8Data1StopNoParity(tChar);
+        }
+#endif
+        tChar = pgm_read_byte_near((const uint8_t * ) ++tPGMStringPtr);
+    }
+}
+
+/*
+ * Write string residing in EEPROM space
+ */
+void writeString_E(const char * aStringPtr) {
+    uint8_t tChar = eeprom_read_byte((const uint8_t *) aStringPtr);
+    // Comparing with 0xFF is safety net for wrong string pointer
+    while (tChar != 0 && tChar != 0xFF) {
+#ifdef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+        write1Start8Data1StopNoParityWithCliSei(tChar);
+#else
+        if (sUseCliSeiForWrite) {
+            write1Start8Data1StopNoParityWithCliSei(tChar);
+        } else {
+            write1Start8Data1StopNoParity(tChar);
+        }
+#endif
+        tChar = eeprom_read_byte((const uint8_t *) ++aStringPtr);
+    }
+}
+
+void writeStringWithoutCliSei(const char * aStringPtr) {
+    while (*aStringPtr != 0) {
+        write1Start8Data1StopNoParity(*aStringPtr++);
+    }
+}
+
+void writeStringWithCliSei(const char * aStringPtr) {
+    while (*aStringPtr != 0) {
+        write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
+    }
+}
+
+void writeStringSkipLeadingSpaces(const char * aStringPtr) {
+    // skip leading spaces
+    while (*aStringPtr == ' ' && *aStringPtr != 0) {
+        aStringPtr++;
+    }
+#ifndef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+    if (sUseCliSeiForWrite) {
+#endif
+        while (*aStringPtr != 0) {
+            write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
+        }
+#ifndef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+    } else {
+        while (*aStringPtr != 0) {
+            write1Start8Data1StopNoParity(*aStringPtr++);
+        }
+    }
+#endif
+}
+
+void writeBinary(uint8_t aByte) {
+#ifdef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+    write1Start8Data1StopNoParityWithCliSei(aByte);
+#else
+    if (sUseCliSeiForWrite) {
+        write1Start8Data1StopNoParityWithCliSei(aByte);
+    } else {
+        write1Start8Data1StopNoParity(aByte);
+    }
+#endif
+}
+
+void writeUnsignedByte(uint8_t aByte) {
+    char tStringBuffer[4];
+    utoa(aByte, tStringBuffer, 10);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+/*
+ * 2 Byte Hex output with 2 Byte prefix "0x"
+ */
+void writeUnsignedByteHexWithPrefix(uint8_t aByte) {
+    char tStringBuffer[5];
+    tStringBuffer[0] = '0';
+    tStringBuffer[1] = 'x';
+    utoa(aByte, &tStringBuffer[2], 16);
+    if (tStringBuffer[3] == '\0') {
+        tStringBuffer[4] = '\0';
+        tStringBuffer[3] = tStringBuffer[2];
+        tStringBuffer[2] = '0';
+    }
+    writeString(tStringBuffer);
+}
+
+/*
+ * 2 Byte Hex output if it must be short :-)
+ */
+void writeUnsignedByteHex(uint8_t aByte) {
+    char tStringBuffer[3];
+    utoa(aByte, &tStringBuffer[0], 16);
+    if (tStringBuffer[1] == '\0') {
+        tStringBuffer[2] = '\0';
+        tStringBuffer[1] = tStringBuffer[0];
+        tStringBuffer[0] = '0';
+    }
+    writeString(tStringBuffer);
+}
+
+void writeByte(int8_t aByte) {
+    char tStringBuffer[5];
+    itoa(aByte, tStringBuffer, 10);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void writeInt(int aInteger) {
+    char tStringBuffer[7];
+    itoa(aInteger, tStringBuffer, 10);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void writeUnsignedInt(unsigned int aInteger) {
+    char tStringBuffer[6];
+    itoa(aInteger, tStringBuffer, 10);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void writeLong(long aLong) {
+    char tStringBuffer[12];
+    ltoa(aLong, tStringBuffer, 10);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void writeUnsignedLong(unsigned long aLong) {
+    char tStringBuffer[11];
+    ltoa(aLong, tStringBuffer, 10);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void writeFloat(double aFloat) {
+    char tStringBuffer[11];
+    dtostrf(aFloat, 10, 3, tStringBuffer);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void writeFloat(double aFloat, uint8_t aDigits) {
+    char tStringBuffer[11];
+    dtostrf(aFloat, 10, aDigits, tStringBuffer);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+/*
+ * The Serial Instance!!!
+ */
+TinyDebugSerial Serial;
+
+/*
+ * Member functions for TinyDebugSerial
+ */
+
+void TinyDebugSerial::print(const char* aStringPtr) {
+    writeString(aStringPtr);
+}
+
+void TinyDebugSerial::print(const __FlashStringHelper * aStringPtr) {
+    writeString(aStringPtr);
+}
+
+void TinyDebugSerial::print(char aChar) {
+    writeBinary(aChar);
+}
+
+void TinyDebugSerial::print(uint8_t aByte, uint8_t aBase) {
+    if (aBase == 16) {
+        /*
+         * Print Hex always with two characters
+         */
+        char tStringBuffer[3];
+        utoa(aByte, &tStringBuffer[0], aBase);
+        if (tStringBuffer[1] == '\0') {
+            tStringBuffer[2] = '\0';
+            tStringBuffer[1] = tStringBuffer[0];
+            tStringBuffer[0] = '0';
+        }
+        writeString(tStringBuffer);
+    } else {
+        char tStringBuffer[4];
+        utoa(aByte, tStringBuffer, aBase);
+        writeStringSkipLeadingSpaces(tStringBuffer);
+    }
+}
+
+void TinyDebugSerial::print(int aInteger, uint8_t aBase) {
+    char tStringBuffer[7];
+    itoa(aInteger, tStringBuffer, aBase);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void TinyDebugSerial::print(unsigned int aInteger, uint8_t aBase) {
+    char tStringBuffer[6];
+    itoa(aInteger, tStringBuffer, aBase);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void TinyDebugSerial::print(long aLong, uint8_t aBase) {
+    char tStringBuffer[12];
+    ltoa(aLong, tStringBuffer, aBase);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void TinyDebugSerial::print(unsigned long aLong, uint8_t aBase) {
+    char tStringBuffer[11];
+    ltoa(aLong, tStringBuffer, aBase);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void TinyDebugSerial::print(double aFloat, uint8_t aDigits) {
+    char tStringBuffer[11];
+    dtostrf(aFloat, 10, aDigits, tStringBuffer);
+    writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+/*
+ * 2 Byte Hex output with 2 Byte prefix "0x"
+ */
+void TinyDebugSerial::printHex(uint8_t aByte) {
+    char tStringBuffer[5];
+    tStringBuffer[0] = '0';
+    tStringBuffer[1] = 'x';
+    utoa(aByte, &tStringBuffer[2], 16);
+    if (tStringBuffer[3] == '\0') {
+        tStringBuffer[4] = '\0';
+        tStringBuffer[3] = tStringBuffer[2];
+        tStringBuffer[2] = '0';
+    }
+    writeString(tStringBuffer);
+}
+
+void TinyDebugSerial::println(const __FlashStringHelper * aStringPtr) {
+    print(aStringPtr);
+    print('\n');
+}
+
+void TinyDebugSerial::println(uint8_t aByte, uint8_t aBase) {
+    print(aByte, aBase);
+    print('\n');
+}
+
+void TinyDebugSerial::println(int aInteger, uint8_t aBase) {
+    print(aInteger, aBase);
+    print('\n');
+}
+
+void TinyDebugSerial::println(unsigned int aInteger, uint8_t aBase) {
+    print(aInteger, aBase);
+    print('\n');
+}
+
+void TinyDebugSerial::println(long aLong, uint8_t aBase) {
+    print(aLong, aBase);
+    print('\n');
+}
+
+void TinyDebugSerial::println(unsigned long aLong, uint8_t aBase) {
+    print(aLong, aBase);
+    print('\n');
+}
+
+void TinyDebugSerial::println(double aFloat, uint8_t aDigits) {
+    print(aFloat, aDigits);
+    print('\n');
+}
+
+void TinyDebugSerial::println() {
+    print('\n');
+}
+
+/********************************
+ * Basic serial output function
+ *******************************/
+
 inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
-    // the following loop takes 4 cycles (4 microseconds  at 1MHz) per iteration + 2 for setting of a4Microseconds
+    /*
+     * The loop takes 4 cycles (4 microseconds  at 1MHz). Last loop is only 3 cycles. Setting of loop counter a4Microseconds needs 2 cycles
+     * 3 -> 13 cycles (3*4 -1 + 2) = 3*4 + 1
+     * 4 -> 17 cycles
+     * 5 -> 21 cycles
+     */
     asm volatile (
-            "1: sbiw %0,1" "\n\t"// 2 cycles
+            "1: sbiw %0,1" "\n\t" // 2 cycles
             "brne .-4" : "=w" (a4Microseconds) : "0" (a4Microseconds)// 2 cycles
     );
 }
-#endif
 
-#if (F_CPU == 1000000)
-#ifdef USE_115200BAUD
+#if (F_CPU == 1000000) && defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1MHz
 /*
- * 8,680 cycles per bit, 86,8 per byte for 115200 baud
+ * 115200 baud - 8,680 cycles per bit, 86,8 per byte @ 1MHz
  *
  *  Assembler code for 115200 baud extracted from Digispark core files:
  *  Code size is 196 Byte (including first call)
@@ -100,8 +418,6 @@ inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
 void write1Start8Data1StopNoParity(uint8_t aValue) {
     asm volatile
     (
-            "cli" "\n\t"
-
             "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- 0 */
             "ror   %[value]" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
@@ -230,8 +546,6 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "nop" "\n\t" /* 1 */
             /*    <---sp is 9 cycles */
 
-            "sei" "\n\t"
-
             :
             :
             [value] "r" ( aValue ),
@@ -241,50 +555,95 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 }
 #else
 /*
- * 26,04 cycles per bit, 260,4 per byte for 38400 baud
- * 17,36 cycles per bit, 173,6 per byte for 57600 baud -> therefore use 38400
- * 24 cycles between each cbi/sbi (Clear/Set Bit in IO-register) command. 2 cycles for each cbi/sbi instruction.
- * code size is 76 Byte (including first call)
+ * Small code using loop. Code size is 76 Byte (including first call)
+ *
+ * 1MHz CPU Clock
+ *  26,04 cycles per bit, 260,4 per byte for 38400 baud at 1MHz Clock
+ *  17,36 cycles per bit, 173,6 per byte for 57600 baud at 1MHz Clock -> therefore use 38400 baud
+ *  24 cycles between each cbi/sbi (Clear/Set Bit in IO-register) command.
+ *
+ * 8MHz CPU Clock
+ *  69,44 cycles per bit, 694,4 per byte for 115200 baud at 8MHz Clock
+ *  34,72 cycles per bit, 347,2 per byte for 230400 baud at 8MHz Clock.
+ *  68 / 33 cycles between each cbi (Clear Bit in IO-register) or sbi command.
+ *
+ * 16MHz CPU Clock
+ *  138,88 cycles per bit, 1388,8 per byte for 115200 baud at 16MHz Clock
+ *  69,44 cycles per bit, 694,4 per byte for 230400 baud at 16MHz Clock
+ *  137 / 68 cycles between each cbi (Clear Bit in IO-register) or sbi command.
+ *
+ * 2 cycles for each cbi/sbi instruction.
  */
 void write1Start8Data1StopNoParity(uint8_t aValue) {
-#ifdef USE_ASSEMBLER_VERSION
     asm volatile
     (
-            "cbi  %[txport] , %[txpin]" "\n\t"    // 2    PORTB &= ~(1 << TX_PIN);
+            "cbi  %[txport] , %[txpin]" "\n\t" // 2    PORTB &= ~(1 << TX_PIN);
+#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1MHz 38400 baud
+            // 0 cycles padding to get additional 4 cycles
+            //delay4CyclesInlineExact(5); -> 20 cycles
+            "ldi  r30 , 0x05" "\n\t"// 1
+#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8MHz 115200 baud OR 16MHz 230400 baud
+            // 3 cycles padding to get additional 7 cycles
             "nop" "\n\t"// 1    _nop"();
-            //delay4CyclesInlineExact(4);
-            "ldi  r30 , 0x04" "\n\t"// 1
-            "ldi  r31 , 0x00" "\n\t"// 1
+            "nop" "\n\t"// 1    _nop"();
+            "nop" "\n\t"// 1    _nop"();
+            //delay4CyclesInlineExact(15); -> 61 cycles
+            "ldi  r30 , 0x0F" "\n\t"// 1
+#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8MHz 230400 baud
+            // 0 cycles padding to get additional 4 cycles
+            //delay4CyclesInlineExact(7); -> 29 cycles
+            "ldi  r30 , 0x07" "\n\t"// 1
+#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16MHz 115200 baud
+            // 0 cycles padding to get additional 4 cycles
+            //delay4CyclesInlineExact(33); -> 133 cycles
+            "ldi  r30 , 0x21" "\n\t"// 1
+#endif
+            "ldi  r31 , 0x00" "\n\t"            // 1
             "delay1:"
             "sbiw r30 , 0x01" "\n\t"// 2
             "brne delay1" "\n\t"// 1-2
 
             "ldi r25 , 0x08" "\n\t"// 1
-            "nop" "\n\t"// 1    _nop"();
-            "nop" "\n\t"// 1    _nop"();
+
             // Start of loop
             // if (aValue & 0x01) {
             "loop:"
             "sbrs %[value] , 0" "\n\t"// 1
-            "rjmp low" "\n\t"// 2
+            "rjmp .+6" "\n\t"// 2
 
             "nop" "\n\t"// 1
             "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
-            "rjmp shift" "\n\t"// 2
+            "rjmp .+6" "\n\t"// 2
 
-            "low:"
             "cbi %[txport] , %[txpin]" "\n\t"// 2    PORTB &= ~(1 << TX_PIN);
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
-
-            "shift:"
             "lsr %[value]" "\n\t"// 1    aValue = aValue >> 1;
-            // 2 cycles padding
+
+#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1MHz 38400 baud
+            // 3 cycles padding to get additional 11 cycles
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
-            // delay4CyclesInlineExact(3);
+            "nop" "\n\t"// 1
+            // delay4CyclesInlineExact(3); -> 13 cycles
             "ldi  r30 , 0x03" "\n\t"// 1
-            "ldi  r31 , 0x00" "\n\t"// 1
+#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8MHz 115200 baud OR 16MHz 230400 baud
+            // 3 cycles padding to get additional 11 cycles
+            "nop" "\n\t"// 1
+            "nop" "\n\t"// 1
+            "nop" "\n\t"// 1
+            // delay4CyclesInlineExact(14); -> 57 cycles
+            "ldi r30 , 0x0E" "\n\t"// 1
+#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8MHz 230400 baud
+            // 0 cycles padding to get additional 8 cycles
+            // delay4CyclesInlineExact(6); -> 25 cycles
+            "ldi r30 , 0x05" "\n\t"// 1
+#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16MHz 115200 baud
+            // 0 cycles padding to get additional 8 cycles
+            //delay4CyclesInlineExact(32); -> 129 cycles
+            "ldi  r30 , 0x20" "\n\t"// 1
+#endif
+            "ldi r31 , 0x00" "\n\t"            // 1
             "delay2:"
             "sbiw r30 , 0x01" "\n\t"// 2
             "brne delay2" "\n\t"// 1-2
@@ -300,12 +659,25 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             // Stop bit
             "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
-            // delay4CyclesInlineExact(4)
-            "ldi r30 , 0x04" "\n\t"// 1
-            "ldi r31 , 0x00" "\n\t"// 1
+
+#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1MHz 38400 baud
+            // delay4CyclesInlineExact(4); -> 17 cycles - gives minimum 25 cycles for stop bit
+            "ldi  r30 , 0x04" "\n\t"// 1
+#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8MHz 115200 baud OR 16MHz 230400 baud
+            // delay4CyclesInlineExact(15) -> 61 cycles - gives minimum 69 cycles for stop bit
+            "ldi r30 , 0x0F" "\n\t"// 1
+#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8MHz 230400 baud
+            // delay4CyclesInlineExact(5) -> 27 cycles - gives minimum 35 cycles for stop bit
+            "ldi r30 , 0x05" "\n\t"// 1
+#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16MHz 115200 baud
+            // delay4CyclesInlineExact(32) -> 129 cycles - gives minimum 137 cycles for stop bit
+            "ldi r30 , 0x20" "\n\t"// 1
+#endif
+            "ldi r31 , 0x00" "\n\t"            // 1
             "delay3:"
             "sbiw r30 , 0x01" "\n\t"//
             "brne delay3" "\n\t"// 1-2
+            // return needs 4 cycles, load of next value needs 1 cycle, next rcall needs 3 cycles -> gives additional 8 cycles minimum for stop bit
 
             :
             :
@@ -317,9 +689,20 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "r30",
             "r31"
     );
-#else
+
+}
+#endif
+
+/*
+ * C Version which generates the assembler code above.
+ *      In order to guarantee the correct timing, compile with Arduino standard settings or:
+ *      avr-g++ -I"C:\arduino\hardware\arduino\avr\cores\arduino" -I"C:\arduino\hardware\arduino\avr\variants\standard" -c -g -w -Os -ffunction-sections -fdata-sections -mmcu=attiny85 -DF_CPU=1000000UL -MMD -o "TinySerialOut.o" "TinySerialOut.cpp"
+ *      Tested with Arduino 1.6.8 and 1.8.5/gcc4.9.2
+ *      C Version does not work with AVR gcc7.3.0, since optimization is too bad
+ */
+void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
     /*
-     * C Version here. You see, it is simple :-)
+     * C Version here for 38400 baud at 1MHz Clock. You see, it is simple :-)
      */
     // start bit
     PORTB &= ~(1 << TX_PIN);
@@ -348,7 +731,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
         _NOP();
         delay4CyclesInlineExact(3);
         --i;
-    }while (i > 0);
+    } while (i > 0);
 
     // to compensate for missing loop cycles at last bit
     _NOP();
@@ -359,315 +742,5 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
     // Stop bit
     PORTB |= 1 << TX_PIN;
     // -8 cycles to compensate for fastest repeated call (1 ret + 1 load + 1 call)
-    delay4CyclesInlineExact(4);// gives minimum 25 cycles for stop bit :-)
-#endif
+    delay4CyclesInlineExact(4); // gives minimum 25 cycles for stop bit :-)
 }
-
-#endif
-#endif
-
-#if (F_CPU == 8000000)
-/*
- * 34,72 cycles per bit, 347,2 per byte for 230400 baud at 8MHz Clock
- * 33 cycles between each cbi (Clear Bit in Io-register) or sbi command. 2 cycles for each cbi/sbi instruction.
- */
-void write1Start8Data1StopNoParity(uint8_t aValue) {
-#ifdef USE_ASSEMBLER_VERSION
-    asm volatile
-    (
-            "\n\t" // Clk
-            "cbi  %[txport] , %[txpin]" "\n\t"// 2    PORTB &= ~(1 << TX_PIN);
-            "nop" "\n\t"// 1    _nop"();
-            "nop" "\n\t"// 1    _nop"();
-            //delay4CyclesInlineExact(6);
-            "ldi  r30 , 0x06" "\n\t"// 1
-            "ldi  r31 , 0x00" "\n\t"// 1
-            "delay1:"
-            "sbiw r30 , 0x01" "\n\t"// 2
-            "brne delay1" "\n\t"// 1-2
-
-            "ldi r25 , 0x08" "\n\t"// 1
-            "nop" "\n\t"// 1    _nop"();
-            "nop" "\n\t"// 1    _nop"();
-            // Start of loop
-            // if (aValue & 0x01) {
-            "loop:"
-            "sbrs %[value] , 0" "\n\t"// 1
-            "rjmp .+6" "\n\t"// 2
-
-            "nop" "\n\t"// 1
-            "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
-            "rjmp .+6" "\n\t"// 2
-
-            "cbi %[txport] , %[txpin]" "\n\t"// 2    PORTB &= ~(1 << TX_PIN);
-            "nop" "\n\t"// 1
-            "nop" "\n\t"// 1
-            "lsr %[value]" "\n\t"// 1    aValue = aValue >> 1;
-            // 2 cycles padding
-            "nop" "\n\t"// 1
-            "nop" "\n\t"// 1
-            "nop" "\n\t"// 1
-            // delay4CyclesInlineExact(5);
-            "ldi r30 , 0x05" "\n\t"// 1
-            "ldi r31 , 0x00" "\n\t"// 1
-            "delay2:"
-            "sbiw r30 , 0x01" "\n\t"// 2
-            "brne delay2" "\n\t"// 1-2
-
-            // }while (i > 0);
-            "subi r25 , 0x01" "\n\t"// 1
-            "brne loop" "\n\t"// 1-2
-            // To compensate for missing loop cycles at last bit
-            "nop" "\n\t"// 1
-            "nop" "\n\t"// 1
-            "nop" "\n\t"// 1
-            "nop" "\n\t"// 1
-
-            // Stop bit
-            "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
-            // delay4CyclesInlineExact(4)
-            "ldi r30 , 0x06" "\n\t"// 1
-            "ldi r31 , 0x00" "\n\t"// 1
-            "delay3:"
-            "sbiw r30 , 0x01" "\n\t"//
-            "brne delay3" "\n\t"// 1-2
-
-            :
-            :
-            [value] "r" ( aValue ),
-            [txport] "I" ( 0x18 ) , /* 0x18 is PORTB on Attiny 85 */
-            [txpin] "I" ( TX_PIN )
-            :
-            "r25",
-            "r30",
-            "r31"
-    );
-#else
-    /*
-     * C Version here. You see, it is simple :-)
-     */
-    // start bit
-    PORTB &= ~(1 << TX_PIN);
-    _NOP();
-    _NOP();
-    delay4CyclesInlineExact(6);
-
-    // 8 data bits
-    uint8_t i = 8;
-    do {
-        if (aChar & 0x01) {
-            // bit=1
-            // to compensate for jump at data=0
-            _NOP();
-            PORTB |= 1 << TX_PIN;
-        } else {
-            // bit=0
-            PORTB &= ~(1 << TX_PIN);
-            // compensate for different cycles of sbrs
-            _NOP();
-            _NOP();
-        }
-        aChar = aChar >> 1;
-        delay4CyclesInlineExact(6);
-        --i;
-    }while (i > 0);
-
-    // to compensate for missing loop cycles at last bit
-    _NOP();
-    _NOP();
-    _NOP();
-    _NOP();
-
-    // Stop bit
-    PORTB |= 1 << TX_PIN;
-    // -8 cycles to compensate for fastest repeated call (1 ret + 1 load + 1 call)
-    delay4CyclesInlineExact(6);// gives minimum 33 cycles for stop bit :-)
-#endif
-}
-#endif
-
-/*
- * Write String residing in RAM
- */
-void writeString(const char * aStringPtr) {
-    if (sUseCliSeiForStrings) {
-        while (*aStringPtr != 0) {
-            write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
-        }
-    } else {
-        while (*aStringPtr != 0) {
-            write1Start8Data1StopNoParity(*aStringPtr++);
-        }
-    }
-}
-
-/*
- * Write string residing in program space (FLASH)
- */
-void writeString_P(const char * aStringPtr) {
-    uint8_t tChar = pgm_read_byte_near((const uint8_t * ) aStringPtr);
-    // Comparing with 0xFF is safety net for wrong string pointer
-    while (tChar != 0 && tChar != 0xFF) {
-        if (sUseCliSeiForStrings) {
-            write1Start8Data1StopNoParity(tChar);
-        } else {
-            write1Start8Data1StopNoParityWithCliSei(tChar);
-        }
-        tChar = pgm_read_byte_near((const uint8_t * ) ++aStringPtr);
-    }
-}
-
-/*
- * Write string residing in EEPROM space
- */
-void writeString_E(const char * aStringPtr) {
-    uint8_t tChar = eeprom_read_byte((const uint8_t *) aStringPtr);
-    // Comparing with 0xFF is safety net for wrong string pointer
-    while (tChar != 0 && tChar != 0xFF) {
-        if (sUseCliSeiForStrings) {
-            write1Start8Data1StopNoParity(tChar);
-        } else {
-            write1Start8Data1StopNoParityWithCliSei(tChar);
-        }
-        tChar = eeprom_read_byte((const uint8_t *) ++aStringPtr);
-    }
-}
-
-void writeStringWithoutCliSei(const char * aStringPtr) {
-    while (*aStringPtr != 0) {
-        write1Start8Data1StopNoParity(*aStringPtr++);
-    }
-}
-
-void writeStringWithCliSei(const char * aStringPtr) {
-    while (*aStringPtr != 0) {
-        write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
-    }
-}
-
-void writeStringSkipLeadingSpaces(const char * aStringPtr) {
-    // skip leading spaces
-    while (*aStringPtr == ' ' && *aStringPtr != 0) {
-        aStringPtr++;
-    }
-    if (sUseCliSeiForStrings) {
-        while (*aStringPtr != 0) {
-            write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
-        }
-    } else {
-        while (*aStringPtr != 0) {
-            write1Start8Data1StopNoParity(*aStringPtr++);
-        }
-    }
-}
-
-void writeUnsignedByte(uint8_t aByte) {
-    char tStringBuffer[4];
-    utoa(aByte, tStringBuffer, 10);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-/*
- * 2 Byte Hex output with 2 Byte prefix "0x"
- */
-void writeUnsignedByteHex(uint8_t aByte) {
-    char tStringBuffer[5];
-    tStringBuffer[0] = '0';
-    tStringBuffer[1] = 'x';
-    utoa(aByte, &tStringBuffer[2], 16);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-/*
- * 2 Byte Hex output if it must be short :-)
- */
-void writeUnsignedByteHexWithoutPrefix(uint8_t aByte) {
-    char tStringBuffer[3];
-    utoa(aByte, &tStringBuffer[0], 16);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-void writeByte(int8_t aByte) {
-    char tStringBuffer[5];
-    itoa(aByte, tStringBuffer, 10);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-void writeInt(int aInteger) {
-    char tStringBuffer[7];
-    itoa(aInteger, tStringBuffer, 10);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-void writeUnsignedInt(unsigned int aInteger) {
-    char tStringBuffer[6];
-    itoa(aInteger, tStringBuffer, 10);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-void writeLong(long aLong) {
-    char tStringBuffer[12];
-    ltoa(aLong, tStringBuffer, 10);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-void writeFloat(double aFloat) {
-    char tStringBuffer[11];
-    dtostrf(aFloat, 10, 3, tStringBuffer);
-    writeStringSkipLeadingSpaces(tStringBuffer);
-}
-
-/*
- * Generated Assembler code for write1Start8Data1StopNoParity() - 1MHz version.
- * Check with .lss file created with: avr-objdump -h -S MyProgram.elf  >"MyProgram.lss".
- *
- c4 98           cbi 0x18, 1
- 1 00 00           nop
- 2 eb e0           ldi r30, 0x04
- 3 f0 e0           ldi r31, 0x00
- 4+5 31 97           sbiw    r30, 0x01
- 6 + n*4 f1 f7           brne    .-4
- 7 98 e0           ldi r25, 0x08
- 8 2a e0           ldi r18, 0x03
- 9 30 e0           ldi r19, 0x00
-
- Start of loop
- if (aChar & 0x01) {
- 1 80 ff           sbrs    r24, 0
- 2+3 02 c0           rjmp    .+6
- PORTB |= 1 << TX_PIN;
- 3 00 00           nop
- 4+5 c4 9a           sbi 0x18, 1
- 6+7 02 c0           rjmp    .+6
- PORTB &= ~(1 << TX_PIN);
- 4+5 c4 98           cbi 0x18, 1
- 6 00 00           nop
- 7 00 00           nop
-
- 8 86 95           lsr r24
- 9 00 00           nop
- 10 00 00           nop
- 11 00 00           nop
- 12 f9 01           movw    r30, r18
- 13+14 31 97           sbiw    r30, 0x01
- 15 f1 f7           brne    .-4
- 16 91 50           subi    r25, 0x01
- 17+18 a1 f7           brne    .-34
-
- To compensate for missing loop cycles at last bit
- 00 00           nop
- 00 00           nop
- 00 00           nop
- 00 00           nop
-
- Stop bit
- c4 9a           sbi 0x18, 1
- 8a e0           ldi r24, 0x04
- 90 e0           ldi r25, 0x00
- 01 97           sbiw    r24, 0x01
- f1 f7           brne    .-4
-
- 08 95           ret
-
- *
- */

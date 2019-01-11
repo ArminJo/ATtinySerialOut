@@ -35,7 +35,7 @@
 #include "TinySerialOut.h"
 
 #include <avr/io.h>         // for PORTB - is also included by <avr/interrupt.h>
-#include <avr/pgmspace.h>   // for pgm_read_byte_near()
+#include <avr/pgmspace.h>   // for pgm_read_byte()
 #include <avr/eeprom.h>     // for eeprom_read_byte()
 #include <stdlib.h>         // for utoa() etc.
 
@@ -78,7 +78,7 @@ void writeString(const char * aStringPtr) {
  * Write string residing in program space (FLASH)
  */
 void writeString_P(const char * aStringPtr) {
-    uint8_t tChar = pgm_read_byte_near((const uint8_t * ) aStringPtr);
+    uint8_t tChar = pgm_read_byte((const uint8_t * ) aStringPtr);
 // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
 #ifdef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
@@ -90,7 +90,7 @@ void writeString_P(const char * aStringPtr) {
             write1Start8Data1StopNoParity(tChar);
         }
 #endif
-        tChar = pgm_read_byte_near((const uint8_t * ) ++aStringPtr);
+        tChar = pgm_read_byte((const uint8_t * ) ++aStringPtr);
     }
 }
 
@@ -99,7 +99,7 @@ void writeString_P(const char * aStringPtr) {
  */
 void writeString(const __FlashStringHelper * aStringPtr) {
     PGM_P tPGMStringPtr = reinterpret_cast<PGM_P>(aStringPtr);
-    uint8_t tChar = pgm_read_byte_near((const uint8_t * ) aStringPtr);
+    uint8_t tChar = pgm_read_byte((const uint8_t * ) aStringPtr);
 // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
 #ifdef  USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
@@ -111,7 +111,7 @@ void writeString(const __FlashStringHelper * aStringPtr) {
             write1Start8Data1StopNoParity(tChar);
         }
 #endif
-        tChar = pgm_read_byte_near((const uint8_t * ) ++tPGMStringPtr);
+        tChar = pgm_read_byte((const uint8_t * ) ++tPGMStringPtr);
     }
 }
 
@@ -177,6 +177,10 @@ void writeBinary(uint8_t aByte) {
         write1Start8Data1StopNoParity(aByte);
     }
 #endif
+}
+
+void writeChar(uint8_t aChar) {
+    writeBinary(aChar);
 }
 
 void writeUnsignedByte(uint8_t aByte) {

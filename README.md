@@ -1,4 +1,7 @@
 # Attiny Serial Out
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 Minimal bit-bang send serial
 
 115200 baud for 1/8/16 MHz ATtiny clock.

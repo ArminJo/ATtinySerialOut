@@ -86,7 +86,8 @@ void writeStringWithCliSei(const char * aStringPtr);
 void writeStringWithoutCliSei(const char * aStringPtr);
 void writeStringSkipLeadingSpaces(const char * aStringPtr);
 
-void writeBinary(uint8_t aByte);
+void writeBinary(uint8_t aByte); // write direct without decoding
+void writeChar(uint8_t aChar); // Synonym for writeBinary
 void writeByte(int8_t aByte);
 void writeUnsignedByte(uint8_t aByte);
 void writeUnsignedByteHex(uint8_t aByte);

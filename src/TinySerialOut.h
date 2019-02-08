@@ -14,13 +14,14 @@
 //
 //                                         +-\/-+
 //        PCINT5/!RESET/ADC0/dW (D5) PB5  1|    |8  Vcc
-// PCINT3/XTAL1/CLKI/!OC1B/ADC3 (D3) PB3  2|    |7  PB2 (D2) SCK/USCK/SCL/ADC1/T0/INT0/PCINT2
-//  PCINT4/XTAL2/CLKO/OC1B/ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1 / TX Debug output
+// PCINT3/XTAL1/CLKI/!OC1B/ADC3 (D3) PB3  2|    |7  PB2 (D2) SCK/USCK/SCL/ADC1/T0/INT0/PCINT2 / TX Debug output
+//  PCINT4/XTAL2/CLKO/OC1B/ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1
 //                                   GND  4|    |5  PB0 (D0) MOSI/DI/SDA/AIN0/OC0A/!OC1A/AREF/PCINT0
 //                                         +----+
 #ifndef TINY_SERIAL_OUT_H_
 #define TINY_SERIAL_OUT_H_
 
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
 #include <stdint.h>
 #include <stddef.h> // for size_t
 #include <avr/interrupt.h>  // for cli() and sei()
@@ -35,7 +36,7 @@
  * or set it as Symbol like "-DTX_PIN PB1"
  */
 #ifndef TX_PIN
-#define TX_PIN  PB2 // (case pin 7 on Tiny85) - use one of PB0 to PB4 (+PB5) here
+#define TX_PIN  PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
 #endif
 
 /*
@@ -125,6 +126,11 @@ public:
     void println(void);
 };
 
+// To be compatible with ATTinyCore
+#if not defined(USE_SOFTWARE_SERIAL)
 extern TinyDebugSerial Serial;
+#endif
+
+#endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
 
 #endif /* TINY_SERIAL_OUT_H_ */

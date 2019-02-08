@@ -32,6 +32,8 @@
  *
  */
 
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+
 #include "TinySerialOut.h"
 
 #include <avr/io.h>         // for PORTB - is also included by <avr/interrupt.h>
@@ -748,3 +750,5 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
     // -8 cycles to compensate for fastest repeated call (1 ret + 1 load + 1 call)
     delay4CyclesInlineExact(4); // gives minimum 25 cycles for stop bit :-)
 }
+#endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+

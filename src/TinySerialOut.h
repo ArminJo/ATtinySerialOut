@@ -22,6 +22,7 @@
 #define TINY_SERIAL_OUT_H_
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+#include <Arduino.h>
 #include <stdint.h>
 #include <stddef.h> // for size_t
 #include <avr/interrupt.h>  // for cli() and sei()
@@ -72,10 +73,11 @@ inline void writeValue(uint8_t aValue) {
     write1Start8Data1StopNoParity(aValue);
 }
 
-
 // The same class as for plain arduino
-#ifndef F
+// The digispark library defines (2/2019) F but not __FlashStringHelper
+#if not defined(F) || defined(ARDUINO_AVR_DIGISPARK)
 class __FlashStringHelper;
+#undef F
 #define F(string_literal) (reinterpret_cast<const __FlashStringHelper *>(PSTR(string_literal)))
 #endif
 
@@ -100,8 +102,13 @@ void writeUnsignedLong(unsigned long aLong);
 void writeFloat(double aFloat);
 void writeFloat(double aFloat, uint8_t aDigits);
 
-class TinyDebugSerial {
+class TinySerialOut {
 public:
+
+    void begin(long);
+    void end();
+    void flush(void);
+
     void print(const __FlashStringHelper * aStringPtr);
     void print(const char* aStringPtr);
     void print(char aChar);
@@ -114,6 +121,7 @@ public:
 
     void printHex(uint8_t aByte); // with 0x prefix
 
+    void println(const char* aStringPtr);
     void println(const __FlashStringHelper * aStringPtr);
     void println(char aChar);
     void println(uint8_t aByte, uint8_t aBase = 10);
@@ -126,9 +134,15 @@ public:
     void println(void);
 };
 
-// To be compatible with ATTinyCore
-#if not defined(USE_SOFTWARE_SERIAL)
-extern TinyDebugSerial Serial;
+// #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
+#if (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL != 0)) || defined(TINY_DEBUG_SERIAL_SUPPORTED)
+// Switch to SerialOut since Serial is already defined or comment out
+// the line 228 //#include "TinySoftwareSerial.h" in in ATTinyCores/src/tiny/Arduino.h for ATTinyCores
+// or line 18  //#include "TinyDebugSerial.h" in AttinyDigisparkCores/src/tiny/WProgram.h for AttinyDigisparkCores
+extern TinySerialOut SerialOut;
+#define Serial SerialOut
+#else
+extern TinySerialOut Serial;
 #endif
 
 #endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)

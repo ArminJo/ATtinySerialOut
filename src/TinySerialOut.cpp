@@ -266,25 +266,60 @@ void writeFloat(double aFloat, uint8_t aDigits) {
 /*
  * The Serial Instance!!!
  */
-TinyDebugSerial Serial;
+
+// #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
+#if (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL != 0)) || defined(TINY_DEBUG_SERIAL_SUPPORTED)
+// Switch to SerialOut since Serial is already defined or comment out
+// the line 228 //#include "TinySoftwareSerial.h" in in ATTinyCores/src/tiny/Arduino.h for ATTinyCores
+// or line 18  //#include "TinyDebugSerial.h" in AttinyDigisparkCores/src/tiny/WProgram.h for AttinyDigisparkCores
+TinySerialOut SerialOut;
+#else
+TinySerialOut Serial;
+#endif
 
 /*
- * Member functions for TinyDebugSerial
+ * Member functions for TinySerialOut
  */
 
-void TinyDebugSerial::print(const char* aStringPtr) {
+void TinySerialOut::begin(long aBaudrate) {
+#if defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1MHz
+    if (aBaudrate != 115200) {
+        println(F("Only 115200 supported!"));
+    }
+#else
+#if (F_CPU == 1000000)
+    if (aBaudrate != 38400) {
+        println(F("Only 38400 supported!"));
+    }
+#else
+    if (aBaudrate != 230400) {
+        println(F("Only 230400 supported!"));
+    }
+#endif
+#endif
+}
+
+void TinySerialOut::end() {
+    // no action needed
+}
+
+void TinySerialOut::flush() {
+    // no action needed, since we do not use a buffer
+}
+
+void TinySerialOut::print(const char* aStringPtr) {
     writeString(aStringPtr);
 }
 
-void TinyDebugSerial::print(const __FlashStringHelper * aStringPtr) {
+void TinySerialOut::print(const __FlashStringHelper * aStringPtr) {
     writeString(aStringPtr);
 }
 
-void TinyDebugSerial::print(char aChar) {
+void TinySerialOut::print(char aChar) {
     writeBinary(aChar);
 }
 
-void TinyDebugSerial::print(uint8_t aByte, uint8_t aBase) {
+void TinySerialOut::print(uint8_t aByte, uint8_t aBase) {
     if (aBase == 16) {
         /*
          * Print Hex always with two characters
@@ -304,31 +339,31 @@ void TinyDebugSerial::print(uint8_t aByte, uint8_t aBase) {
     }
 }
 
-void TinyDebugSerial::print(int aInteger, uint8_t aBase) {
+void TinySerialOut::print(int aInteger, uint8_t aBase) {
     char tStringBuffer[7];
     itoa(aInteger, tStringBuffer, aBase);
     writeStringSkipLeadingSpaces(tStringBuffer);
 }
 
-void TinyDebugSerial::print(unsigned int aInteger, uint8_t aBase) {
+void TinySerialOut::print(unsigned int aInteger, uint8_t aBase) {
     char tStringBuffer[6];
     itoa(aInteger, tStringBuffer, aBase);
     writeStringSkipLeadingSpaces(tStringBuffer);
 }
 
-void TinyDebugSerial::print(long aLong, uint8_t aBase) {
+void TinySerialOut::print(long aLong, uint8_t aBase) {
     char tStringBuffer[12];
     ltoa(aLong, tStringBuffer, aBase);
     writeStringSkipLeadingSpaces(tStringBuffer);
 }
 
-void TinyDebugSerial::print(unsigned long aLong, uint8_t aBase) {
+void TinySerialOut::print(unsigned long aLong, uint8_t aBase) {
     char tStringBuffer[11];
     ltoa(aLong, tStringBuffer, aBase);
     writeStringSkipLeadingSpaces(tStringBuffer);
 }
 
-void TinyDebugSerial::print(double aFloat, uint8_t aDigits) {
+void TinySerialOut::print(double aFloat, uint8_t aDigits) {
     char tStringBuffer[11];
     dtostrf(aFloat, 10, aDigits, tStringBuffer);
     writeStringSkipLeadingSpaces(tStringBuffer);
@@ -337,7 +372,7 @@ void TinyDebugSerial::print(double aFloat, uint8_t aDigits) {
 /*
  * 2 Byte Hex output with 2 Byte prefix "0x"
  */
-void TinyDebugSerial::printHex(uint8_t aByte) {
+void TinySerialOut::printHex(uint8_t aByte) {
     char tStringBuffer[5];
     tStringBuffer[0] = '0';
     tStringBuffer[1] = 'x';
@@ -350,42 +385,47 @@ void TinyDebugSerial::printHex(uint8_t aByte) {
     writeString(tStringBuffer);
 }
 
-void TinyDebugSerial::println(const __FlashStringHelper * aStringPtr) {
+void TinySerialOut::println(const char* aStringPtr) {
     print(aStringPtr);
     print('\n');
 }
 
-void TinyDebugSerial::println(uint8_t aByte, uint8_t aBase) {
+void TinySerialOut::println(const __FlashStringHelper * aStringPtr) {
+    print(aStringPtr);
+    print('\n');
+}
+
+void TinySerialOut::println(uint8_t aByte, uint8_t aBase) {
     print(aByte, aBase);
     print('\n');
 }
 
-void TinyDebugSerial::println(int aInteger, uint8_t aBase) {
+void TinySerialOut::println(int aInteger, uint8_t aBase) {
     print(aInteger, aBase);
     print('\n');
 }
 
-void TinyDebugSerial::println(unsigned int aInteger, uint8_t aBase) {
+void TinySerialOut::println(unsigned int aInteger, uint8_t aBase) {
     print(aInteger, aBase);
     print('\n');
 }
 
-void TinyDebugSerial::println(long aLong, uint8_t aBase) {
+void TinySerialOut::println(long aLong, uint8_t aBase) {
     print(aLong, aBase);
     print('\n');
 }
 
-void TinyDebugSerial::println(unsigned long aLong, uint8_t aBase) {
+void TinySerialOut::println(unsigned long aLong, uint8_t aBase) {
     print(aLong, aBase);
     print('\n');
 }
 
-void TinyDebugSerial::println(double aFloat, uint8_t aDigits) {
+void TinySerialOut::println(double aFloat, uint8_t aDigits) {
     print(aFloat, aDigits);
     print('\n');
 }
 
-void TinyDebugSerial::println() {
+void TinySerialOut::println() {
     print('\n');
 }
 
@@ -413,7 +453,7 @@ inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
  *  Assembler code for 115200 baud extracted from Digispark core files:
  *  Code size is 196 Byte (including first call)
  *
- *   TinyDebugSerial.h - Tiny write-only software serial.
+ *   TinySerialOut.h - Tiny write-only software serial.
  *   Copyright 2010 Rowdy Dog Software. This code is part of Arduino-Tiny.
  *
  *   Arduino-Tiny is free software: you can redistribute it and/or modify it

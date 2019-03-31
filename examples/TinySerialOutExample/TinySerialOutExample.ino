@@ -8,12 +8,12 @@
 #include <avr/pgmspace.h> // needed for PSTR()
 #include "TinySerialOut.h"
 
-#define VERSION "1.0"
+#define VERSION_EXAMPLE "1.0"
 
 void setup(void) {
     initTXPin();
 
-    writeString(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\n"));
+    writeString(F("START " __FILE__ "\nVersion " VERSION_EXAMPLE " from " __DATE__ "\n"));
 
     uint8_t tOSCCAL = OSCCAL;
 

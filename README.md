@@ -9,7 +9,7 @@ Minimal bit-bang send serial
 ### Provides Serial.print / println functions for easy software porting. 
 ### Code size only 76 Bytes including first call, except for 115200 baud at 1 Mhz, there we need 196 Bytes.
 ### Uses PB2 / Pin7 on ATtiny85 as output.
-To change the output pin, just modify line 38 in TinySerialOut.h. You will find the file in the Arduino IDE under "Sketch/Show Sketch Folder" (or Ctrl+K) and then in the TinySerialOut/src directory. Or set it as compiler symbol like "-DTX_PIN PB1".
+To change the output pin, just modify line 38 in TinySerialOut.h. You will find the file in the Arduino IDE under "Sketch/Show Sketch Folder" (or Ctrl+K) and then in the libraries/TinySerialOut/src directory. Or set it as compiler symbol like "-DTX_PIN PB1".
 
 ## Download
  The actual version can be downloaded directly from GitHub [here](https://github.com/ArminJo/ATtinySerialOut/blob/master/extras/TinySerialOut.zip?raw=true)

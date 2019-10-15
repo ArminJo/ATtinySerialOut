@@ -1,7 +1,7 @@
 /*
  * TinySerialOut.h
  *
- *  Copyright (C) 2015-2018  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2019  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *  License: GPL v3 (http://www.gnu.org/licenses/gpl.html)
  *
@@ -21,7 +21,7 @@
 #ifndef TINY_SERIAL_OUT_H_
 #define TINY_SERIAL_OUT_H_
 
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 #include <Arduino.h>
 #include <stdint.h>
 #include <stddef.h> // for size_t
@@ -35,13 +35,32 @@
 /*
  * Change this, if you need another pin as serial output
  * or set it as Symbol like "-DTX_PIN PB1"
+ * or when switching port (e.g. for ATiny167), then we need more Symbols like "-DTX_PIN PB1 -DTX_PORT PORTB -DTX_PORT_ADDR 0x05 -TX_DDR DDRB"
  */
+#if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 #ifndef TX_PIN
-#define TX_PIN  PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
+#define TX_PIN PA1 // (package pin 2 on Tiny167) - can use one of PA0 to PA7 here
+#endif
+#ifndef TX_PORT
+#define TX_PORT PORTA
+#define TX_PORT_ADDR 0x02 // PORTA
+#define TX_DDR DDRA
+
+//#define TX_PORT PORTB
+//#define TX_PORT_ADDR 0x05
+//#define TX_DDR DDRB
 #endif
 
+#else // defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+#ifndef TX_PIN
+#define TX_PIN PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
+#endif
+#define TX_PORT PORTB
+#define TX_PORT_ADDR 0x18 // PORTB
+#define TX_DDR DDRB
+#endif // defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 /*
- * @1MHz use bigger (+120 bytes for unrolled loop) but faster code. Otherwise only 38400 baud is possible.
+ * @1 MHz use bigger (+120 bytes for unrolled loop) but faster code. Otherwise only 38400 baud is possible.
  * @8/16 MHz use 115200 baud instead of 230400 baud.
  */
 #ifndef TINY_SERIAL_DO_NOT_USE_115200BAUD  // define this to force using other baud rates
@@ -49,24 +68,25 @@
 #endif
 
 /*
- * Define or uncomment this, if you want to save code size and if you can live with 87 micro seconds intervals of disabled interrupts for each sent byte.
+ * Define or comment this out, if you want to save code size and if you can live with 87 micro seconds intervals of disabled interrupts for each sent byte.
  */
 //#define USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
 extern bool sUseCliSeiForWrite; // default is true
-void useCliSeiForStrings(bool aUseCliSeiForWrite);
+void useCliSeiForStrings(bool aUseCliSeiForWrite); // might be useful to set to false if output is done from ISR, to avoid to call unwanted sei().
 
 inline void initTXPin() {
     // TX_PIN is active LOW, so set it to HIGH initially
-    PORTB |= (1 << TX_PIN);
+    TX_PORT |= (1 << TX_PIN);
     // set pin direction to output
-    DDRB |= (1 << TX_PIN);
+    TX_DDR |= (1 << TX_PIN);
 }
 
 void write1Start8Data1StopNoParity(uint8_t aValue);
 inline void write1Start8Data1StopNoParityWithCliSei(uint8_t aValue) {
+    uint8_t oldSREG = SREG;
     cli();
     write1Start8Data1StopNoParity(aValue);
-    sei();
+    SREG = oldSREG;
 }
 
 inline void writeValue(uint8_t aValue) {
@@ -135,16 +155,17 @@ public:
 };
 
 // #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
-#if (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL != 0)) || defined(TINY_DEBUG_SERIAL_SUPPORTED)
+#if ((!defined(UBRRH) && !defined(UBRR0H)) || (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL != 0))) || defined(TINY_DEBUG_SERIAL_SUPPORTED) || ((defined(UBRRH) || defined(UBRR0H) || defined(LINBRRH)) && (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL == 0)))
 // Switch to SerialOut since Serial is already defined or comment out
-// the line 228 //#include "TinySoftwareSerial.h" in in ATTinyCores/src/tiny/Arduino.h for ATTinyCores
-// or line 18  //#include "TinyDebugSerial.h" in AttinyDigisparkCores/src/tiny/WProgram.h for AttinyDigisparkCores
+// at line 54 in TinySoftwareSerial.h included in in ATTinyCores/src/tiny/Arduino.h at line 228  for ATTinyCores
+// or line 71 in HardwareSerial.h included in ATTinyCores/src/tiny/Arduino.h at line 227 for ATTinyCores
+// or line 627ff TinyDebugSerial.h included in AttinyDigisparkCores/src/tiny/WProgram.h at line 18 for AttinyDigisparkCores
 extern TinySerialOut SerialOut;
 #define Serial SerialOut
 #else
 extern TinySerialOut Serial;
 #endif
 
-#endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+#endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
 #endif /* TINY_SERIAL_OUT_H_ */

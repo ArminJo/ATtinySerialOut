@@ -2,7 +2,7 @@
  * TinySerialOut.cpp
  *
  * For transmitting debug data over bit bang serial with 115200 baud for 1/8/16 MHz ATtiny clock.
- * For 1MHZ you can choose also 38400 baud (120 bytes smaller code size).
+ * For 1 MHz you can choose also 38400 baud (120 bytes smaller code size).
  * For 8/16 MHz you can choose also 230400 baud (just faster).
  * 1 Start, 8 Data, 1 Stop, No Parity
  *
@@ -32,7 +32,7 @@
  *
  */
 
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
 #include "TinySerialOut.h"
 
@@ -268,10 +268,11 @@ void writeFloat(double aFloat, uint8_t aDigits) {
  */
 
 // #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
-#if (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL != 0)) || defined(TINY_DEBUG_SERIAL_SUPPORTED)
+#if ((!defined(UBRRH) && !defined(UBRR0H)) || (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL != 0))) || defined(TINY_DEBUG_SERIAL_SUPPORTED) || ((defined(UBRRH) || defined(UBRR0H) || defined(LINBRRH)) && (defined(USE_SOFTWARE_SERIAL) && (USE_SOFTWARE_SERIAL == 0)))
 // Switch to SerialOut since Serial is already defined or comment out
-// the line 228 //#include "TinySoftwareSerial.h" in in ATTinyCores/src/tiny/Arduino.h for ATTinyCores
-// or line 18  //#include "TinyDebugSerial.h" in AttinyDigisparkCores/src/tiny/WProgram.h for AttinyDigisparkCores
+// at line 54 in TinySoftwareSerial.h included in in ATTinyCores/src/tiny/Arduino.h at line 228  for ATTinyCores
+// or line 71 in HardwareSerial.h included in ATTinyCores/src/tiny/Arduino.h at line 227 for ATTinyCores
+// or line 627ff TinyDebugSerial.h included in AttinyDigisparkCores/src/tiny/WProgram.h at line 18 for AttinyDigisparkCores
 TinySerialOut SerialOut;
 #else
 TinySerialOut Serial;
@@ -282,7 +283,7 @@ TinySerialOut Serial;
  */
 
 void TinySerialOut::begin(long aBaudrate) {
-#if defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1MHz
+#if defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1 MHz
     if (aBaudrate != 115200) {
         println(F("Only 115200 supported!"));
     }
@@ -435,7 +436,7 @@ void TinySerialOut::println() {
 
 inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
     /*
-     * The loop takes 4 cycles (4 microseconds  at 1MHz). Last loop is only 3 cycles. Setting of loop counter a4Microseconds needs 2 cycles
+     * The loop takes 4 cycles (4 microseconds  at 1 MHz). Last loop is only 3 cycles. Setting of loop counter a4Microseconds needs 2 cycles
      * 3 -> 13 cycles (3*4 -1 + 2) = 3*4 + 1
      * 4 -> 17 cycles
      * 5 -> 21 cycles
@@ -446,9 +447,9 @@ inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
     );
 }
 
-#if (F_CPU == 1000000) && defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1MHz
+#if (F_CPU == 1000000) && defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1 MHz
 /*
- * 115200 baud - 8,680 cycles per bit, 86,8 per byte @ 1MHz
+ * 115200 baud - 8,680 cycles per bit, 86,8 per byte at 1 MHz
  *
  *  Assembler code for 115200 baud extracted from Digispark core files:
  *  Code size is 196 Byte (including first call)
@@ -464,7 +465,7 @@ inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
 void write1Start8Data1StopNoParity(uint8_t aValue) {
     asm volatile
     (
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- 0 */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- 0 */
             "ror   %[value]" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
@@ -473,10 +474,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b0h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- st is 9 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- st is 9 cycles */
             "rjmp  L%=b0z" "\n\t" /* 2 */
             "L%=b0h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- st is 9 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- st is 9 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b0z: "
@@ -486,10 +487,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b1h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b0 is 8 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b0 is 8 cycles */
             "rjmp  L%=b1z" "\n\t" /* 2 */
             "L%=b1h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b0 is 8 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b0 is 8 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b1z: "
@@ -500,10 +501,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b2h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b1 is 9 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b1 is 9 cycles */
             "rjmp  L%=b2z" "\n\t" /* 2 */
             "L%=b2h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b1 is 9 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b1 is 9 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b2z: "
@@ -514,10 +515,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b3h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b2 is 9 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b2 is 9 cycles */
             "rjmp  L%=b3z" "\n\t" /* 2 */
             "L%=b3h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b2 is 9 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b2 is 9 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b3z: "
@@ -527,10 +528,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b4h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b3 is 8 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b3 is 8 cycles */
             "rjmp  L%=b4z" "\n\t" /* 2 */
             "L%=b4h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b3 is 8 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b3 is 8 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b4z: "
@@ -541,10 +542,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b5h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b4 is 9 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b4 is 9 cycles */
             "rjmp  L%=b5z" "\n\t" /* 2 */
             "L%=b5h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b4 is 9 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b4 is 9 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b5z: "
@@ -555,10 +556,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b6h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b5 is 9 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b5 is 9 cycles */
             "rjmp  L%=b6z" "\n\t" /* 2 */
             "L%=b6h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b5 is 9 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b5 is 9 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b6z: "
@@ -568,10 +569,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "brcs  L%=b7h" "\n\t" /* 1  (not taken) */
             "nop" "\n\t" /* 1 */
-            "cbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b6 is 8 cycles */
+            "cbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b6 is 8 cycles */
             "rjmp  L%=b7z" "\n\t" /* 2 */
             "L%=b7h: " /* 2  (taken) */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b6 is 8 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b6 is 8 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "L%=b7z: "
@@ -582,7 +583,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
-            "sbi   %[serreg], %[serbit]" "\n\t" /* 2  <--- b7 is 9 cycles */
+            "sbi   %[txport], %[txpin]" "\n\t" /* 2  <--- b7 is 9 cycles */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
             "nop" "\n\t" /* 1 */
@@ -595,27 +596,27 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             :
             :
             [value] "r" ( aValue ),
-            [serreg] "I" ( 0x18 ), /* 0x18 is PORTB on Attiny 85 */
-            [serbit] "I" ( TX_PIN )
+            [txport] "I" ( TX_PORT_ADDR ),
+            [txpin] "I" ( TX_PIN )
     );
 }
 #else
 /*
  * Small code using loop. Code size is 76 Byte (including first call)
  *
- * 1MHz CPU Clock
- *  26,04 cycles per bit, 260,4 per byte for 38400 baud at 1MHz Clock
- *  17,36 cycles per bit, 173,6 per byte for 57600 baud at 1MHz Clock -> therefore use 38400 baud
+ * 1 MHz CPU Clock
+ *  26,04 cycles per bit, 260,4 per byte for 38400 baud at 1 MHz Clock
+ *  17,36 cycles per bit, 173,6 per byte for 57600 baud at 1 MHz Clock -> therefore use 38400 baud
  *  24 cycles between each cbi/sbi (Clear/Set Bit in IO-register) command.
  *
- * 8MHz CPU Clock
- *  69,44 cycles per bit, 694,4 per byte for 115200 baud at 8MHz Clock
- *  34,72 cycles per bit, 347,2 per byte for 230400 baud at 8MHz Clock.
+ * 8 MHz CPU Clock
+ *  69,44 cycles per bit, 694,4 per byte for 115200 baud at 8 MHz Clock
+ *  34,72 cycles per bit, 347,2 per byte for 230400 baud at 8 MHz Clock.
  *  68 / 33 cycles between each cbi (Clear Bit in IO-register) or sbi command.
  *
- * 16MHz CPU Clock
- *  138,88 cycles per bit, 1388,8 per byte for 115200 baud at 16MHz Clock
- *  69,44 cycles per bit, 694,4 per byte for 230400 baud at 16MHz Clock
+ * 16 MHz CPU Clock
+ *  138,88 cycles per bit, 1388,8 per byte for 115200 baud at 16 MHz Clock
+ *  69,44 cycles per bit, 694,4 per byte for 230400 baud at 16 MHz Clock
  *  137 / 68 cycles between each cbi (Clear Bit in IO-register) or sbi command.
  *
  * 2 cycles for each cbi/sbi instruction.
@@ -624,22 +625,22 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
     asm volatile
     (
             "cbi  %[txport] , %[txpin]" "\n\t" // 2    PORTB &= ~(1 << TX_PIN);
-#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1MHz 38400 baud
+#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
             // 0 cycles padding to get additional 4 cycles
             //delay4CyclesInlineExact(5); -> 20 cycles
             "ldi  r30 , 0x05" "\n\t"// 1
-#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8MHz 115200 baud OR 16MHz 230400 baud
+#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // 3 cycles padding to get additional 7 cycles
             "nop" "\n\t"// 1    _nop"();
             "nop" "\n\t"// 1    _nop"();
             "nop" "\n\t"// 1    _nop"();
             //delay4CyclesInlineExact(15); -> 61 cycles
             "ldi  r30 , 0x0F" "\n\t"// 1
-#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8MHz 230400 baud
+#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
             // 0 cycles padding to get additional 4 cycles
             //delay4CyclesInlineExact(7); -> 29 cycles
             "ldi  r30 , 0x07" "\n\t"// 1
-#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16MHz 115200 baud
+#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
             // 0 cycles padding to get additional 4 cycles
             //delay4CyclesInlineExact(33); -> 133 cycles
             "ldi  r30 , 0x21" "\n\t"// 1
@@ -666,25 +667,25 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "nop" "\n\t"// 1
             "lsr %[value]" "\n\t"// 1    aValue = aValue >> 1;
 
-#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1MHz 38400 baud
+#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
             // 3 cycles padding to get additional 11 cycles
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             // delay4CyclesInlineExact(3); -> 13 cycles
             "ldi  r30 , 0x03" "\n\t"// 1
-#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8MHz 115200 baud OR 16MHz 230400 baud
+#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // 3 cycles padding to get additional 11 cycles
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             // delay4CyclesInlineExact(14); -> 57 cycles
             "ldi r30 , 0x0E" "\n\t"// 1
-#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8MHz 230400 baud
+#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
             // 0 cycles padding to get additional 8 cycles
             // delay4CyclesInlineExact(6); -> 25 cycles
             "ldi r30 , 0x05" "\n\t"// 1
-#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16MHz 115200 baud
+#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
             // 0 cycles padding to get additional 8 cycles
             //delay4CyclesInlineExact(32); -> 129 cycles
             "ldi  r30 , 0x20" "\n\t"// 1
@@ -706,16 +707,16 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             // Stop bit
             "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
 
-#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1MHz 38400 baud
+#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
             // delay4CyclesInlineExact(4); -> 17 cycles - gives minimum 25 cycles for stop bit
             "ldi  r30 , 0x04" "\n\t"// 1
-#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8MHz 115200 baud OR 16MHz 230400 baud
+#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // delay4CyclesInlineExact(15) -> 61 cycles - gives minimum 69 cycles for stop bit
             "ldi r30 , 0x0F" "\n\t"// 1
-#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8MHz 230400 baud
+#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
             // delay4CyclesInlineExact(5) -> 27 cycles - gives minimum 35 cycles for stop bit
             "ldi r30 , 0x05" "\n\t"// 1
-#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16MHz 115200 baud
+#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
             // delay4CyclesInlineExact(32) -> 129 cycles - gives minimum 137 cycles for stop bit
             "ldi r30 , 0x20" "\n\t"// 1
 #endif
@@ -728,7 +729,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             :
             :
             [value] "r" ( aValue ),
-            [txport] "I" ( 0x18 ) , /* 0x18 is PORTB on Attiny 85 */
+            [txport] "I" ( TX_PORT_ADDR ) , /* 0x18 is PORTB on Attiny 85 */
             [txpin] "I" ( TX_PIN )
             :
             "r25",
@@ -748,10 +749,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
  */
 void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
     /*
-     * C Version here for 38400 baud at 1MHz Clock. You see, it is simple :-)
+     * C Version here for 38400 baud at 1 MHz Clock. You see, it is simple :-)
      */
     // start bit
-    PORTB &= ~(1 << TX_PIN);
+    TX_PORT &= ~(1 << TX_PIN);
     _NOP();
     delay4CyclesInlineExact(4);
 
@@ -762,10 +763,10 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
             // bit=1
             // to compensate for jump at data=0
             _NOP();
-            PORTB |= 1 << TX_PIN;
+            TX_PORT |= 1 << TX_PIN;
         } else {
             // bit=0
-            PORTB &= ~(1 << TX_PIN);
+            TX_PORT &= ~(1 << TX_PIN);
             // compensate for different cycles of sbrs
             _NOP();
             _NOP();
@@ -786,9 +787,9 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
     _NOP();
 
     // Stop bit
-    PORTB |= 1 << TX_PIN;
+    TX_PORT |= 1 << TX_PIN;
     // -8 cycles to compensate for fastest repeated call (1 ret + 1 load + 1 call)
     delay4CyclesInlineExact(4); // gives minimum 25 cycles for stop bit :-)
 }
-#endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+#endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 

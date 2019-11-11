@@ -5,8 +5,9 @@
 
 #include <Arduino.h> // needed for main()
 
+#include "ATtinySerialOut.h"
+
 #include <avr/pgmspace.h> // needed for PSTR()
-#include "TinySerialOut.h"
 
 #define VERSION_EXAMPLE "1.0"
 

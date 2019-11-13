@@ -1,5 +1,5 @@
 /*
- * TinySerialOut.cpp
+ * ATtinySerialOut.cpp
  *
  * For transmitting debug data over bit bang serial with 115200 baud for 1/8/16 MHz ATtiny clock.
  * For 1 MHz you can choose also 38400 baud (120 bytes smaller code size).
@@ -12,7 +12,7 @@
  * Using the Serial.print commands needs 4 bytes extra for each call.
  *
  *
- *  Copyright (C) 2015-2018  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2019  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.

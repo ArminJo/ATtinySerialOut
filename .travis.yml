@@ -30,10 +30,10 @@ before_install:
 - arduino-cli core update-index
 - echo "Install board..."
 # parameter is needed :-(
-- arduino-cli core install digistump:avr
+#- arduino-cli core install digistump:avr
 - arduino-cli core install ATTinyCore:avr
-- echo "Show all boards now available..."
-- arduino-cli board listall
+#- echo "Show all boards now available..."
+#- arduino-cli board listall
 install:
 - mkdir -p $HOME/Arduino/libraries
 - ln -s $PWD $HOME/Arduino/libraries/.
@@ -41,8 +41,8 @@ script:
 # 1MHz ATtiny
 # Digispark is missing line for recipe.output.tmp_file in boards.txt
 #- arduino-cli compile --debug --verbose --warnings all --fqbn digistump:avr:digispark-tiny1 OpenWindowAlarm
-- arduino-cli compile --verbose --warnings all --fqbn ATTinyCore:avr:attinyx5 TinySerialOutExample
-- arduino-cli compile --verbose --warnings all --fqbn ATTinyCore:avr:attinyx5 OpenWindowAlarm
+- arduino-cli compile --verbose --warnings all --fqbn ATTinyCore:avr:attinyx5 examples/ATtinySerialOutExample
+- arduino-cli compile --verbose --warnings all --fqbn ATTinyCore:avr:attinyx5 examples/OpenWindowAlarm
 notifications:
   email:
     recipients:

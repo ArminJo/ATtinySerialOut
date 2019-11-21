@@ -7,29 +7,31 @@
  * Detection of an open window is indicated by a longer 20 ms blink and a short click every 24 seconds.
  * A low battery (below 3.55 volt for LiPo) is indicated by beeping and flashing LED every 24 seconds. Only the beep (not the flash) is significantly longer than at open window detection.
  *
- * Detailed description:
- * Open window is detected after `TEMPERATURE_COMPARE_AMOUNT * TEMPERATURE_SAMPLE_SECONDS` (48) seconds of reading a temperature
- * which value is `TEMPERATURE_DELTA_THRESHOLD_DEGREE` (2) lower than the temperature `TEMPERATURE_COMPARE_DISTANCE * TEMPERATURE_SAMPLE_SECONDS` (192 -> 3 minutes and 12 seconds) seconds before.
- * The delay is implemented by 3 times sleeping at `SLEEP_MODE_PWR_DOWN` for a period of 8 seconds to reduce power consumption.
- * Detection of an open window is indicated by a longer 20 ms blink and a short click every 24 seconds.
- * Therefore, the internal sensor has 3 minutes time to adjust to the outer temperature, to get even small changes in temperature.
- * The greater the temperature change the earlier the sensor value will change and detect an open window.
- * After open window detection Alarm is activated after `OPEN_WINDOW_ALARM_DELAY_MINUTES` (5).
- *   The alarm will not sound the current temperature is greater than the minimum measured temperature (+ 1) i.e. the window has been closed already.
- *
- * At startup, the battery voltage is measured and recognized if the module is operating on one LIPO battery or two standard AA / AAA batteries.
- * Every `VCC_MONITORING_DELAY_MIN` (60) minutes the battery voltage is measured. A battery voltage below `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_LIPO` (3550) Millivolt
- * or below `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD` (2350) mV is indicated by beeping and flashing LED every 24 seconds. Only the beep (not the flash) is significantly longer than at open window detection.
- *
- * The initial alarm lasts for 10 minutes. After this, it is activated for a period of 10 seconds with a increasing break from 24 seconds up to 5 minutes.
- * Check temperature at each end of break interval to discover closed window, if window was closed during the silent break, but device was not reset.
- *
- * After power up or reset, the inactive settling time is 5 minutes or additionally 4:15 (or 8:30) minutes if the board is getting colder during the settling time, to avoid false alarms after boot.
+ * Internal operation:
+ * An open window is detected after `TEMPERATURE_COMPARE_AMOUNT * TEMPERATURE_SAMPLE_SECONDS` (48) seconds of reading a temperature with a value of `TEMPERATURE_DELTA_THRESHOLD_DEGREE` (2) lower
+ than the temperature `TEMPERATURE_COMPARE_DISTANCE * TEMPERATURE_SAMPLE_SECONDS` (192 seconds-> 3 minutes and 12 seconds) before.
+ * The delay is implemented by sleeping 3 times at `SLEEP_MODE_PWR_DOWN` for a period of 8 seconds -the maximum hardware sleep time- to reduce power consumption.
+ * If an **open window is detected**, this is indicated by a longer **20 ms blink** and a **short click** every 24 seconds.
+ Therefore, the internal sensor has a time of 3 minutes to adjust to the outer temperature in order to capture even small changes in temperature.
+ The greater the temperature change the earlier the sensor value will change and detect an open window.
+ * `OPEN_WINDOW_ALARM_DELAY_MINUTES` (5) minutes after open window detection the **alarm is activated**.<br/>
+ The alarm will not start or an activated alarm will stop if the current temperature is greater than the minimum measured temperature (+ 1) i.e. the window has been closed already.
+ * The **initial alarm** lasts for 10 minutes. After this, it is activated for a period of 10 seconds with a increasing break from 24 seconds up to 5 minutes.
+ * At **power-on** the VCC voltage is measured used to **determine the type of battery**  using `VCC_VOLTAGE_LIPO_DETECTION` (3.6 volt).
+ * Every `VCC_MONITORING_DELAY_MIN` (60) minutes the battery voltage is measured. Depending on the detected battery type, **low battery voltage** is indicated by **beeping and flashing the LED every 24 seconds**.
+ Only the beep (not the flash) is significantly longer than the beep for an open window detection.<br/>
+ Low battery voltage is defined by `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_LIPO` (3550 Millivolt) or `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD` (2350 Millivolt).
+ * After power-on, the **inactive settling time** is 5 minutes. If the board is getting colder during the settling time, 4:15 (or 8:30) minutes are added to avoid false alarms after power-on.
+
+ * If you enable `DEBUG` by commenting out line 60, you can monitor the serial output with 115200 baud at P2 to see what is happening.
  *
  * Power consumption:
- * Power consumption is 6uA at sleep and 2.8 mA at at 1 MHz active.
- * Loop needs 2.1 ms and with DEBUG 6.5 ms => active time is ca. 1/10k or 1/4k of total time and power consumption is 500 times more than sleep.
- *   => Loop adds 5% to 12% to total power consumption.
+ * Power consumption is 26 uA at sleep and 2.8 mA at at 1 MHz active.
+ * The software loop needs 2.1 ms and with DEBUG 6.5 ms (plus 3 times 1 ms startup time) => active time is around 1/5000 or 1/2500 of total time.
+ * During the loop the power consumption is 100 times more than sleep => Loop adds only 2% to 4% to total power consumption.
+ * If you reprogram the fuses, you can get 6 µA power consumption.
+ * For the 6 uA scenario, loop current is 500 times and startup time is negligible => loop adds 5% to 12% to total (lower) power consumption.
+ *
  *
  *  Copyright (C) 2018-19  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
@@ -73,8 +75,11 @@
 #include <avr/sleep.h> // needed for sleep_enable()
 #include <avr/wdt.h>   // needed for WDTO_8S
 
-#define VERSION "1.2.2"
+#define VERSION "1.3.0"
 /*
+ * Version 1.3.0
+ * - Changed voltage low detection.
+ * - Improved DEBUG output.
  * Version 1.2.2
  * - Converted to Serial.print.
  * - New PWMTone() without tone().
@@ -125,13 +130,20 @@ uint8_t sOpenWindowSampleDelayCounter;
 /*
  * VCC monitoring
  */
+const uint16_t VCC_VOLTAGE_USB_DETECTION = 4300; // Above 4.3 volt we assume that USB is attached.
 const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_LIPO = 3550; // 3.7 volt is the normal operating voltage if powered by a LiPo battery
-const uint16_t VCC_VOLTAGE_LIPO_DETECTION = 3600; // Above 3.6 volt we assume that a LIPO battery is attached, below we assume a CR2032 or two AA or AAA batteries are attached.
-const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD = 2350; // 3.0 volt is normal operating voltage if powered by a CR2032 or two AA or AAA batteries.
+const uint16_t VCC_VOLTAGE_LIPO_DETECTION = 3450; // Above 3.45 volt we assume that a LIPO battery is attached, below we assume a CR2032 or two AA or AAA batteries are attached.
+const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD = 2600; // 3.0 volt is normal operating voltage if powered by a CR2032 or two AA or AAA batteries.
+const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD_BOD2_7 = 2800; // BOD is at 2.7 Volt typically, so we cannot get values below that
 
 uint16_t sVCCVoltageMillivolt;
 bool sVCCVoltageTooLow;
 bool sLIPOSupplyDetected;
+bool sBODLevelIsBelow2_7;
+uint8_t getBODLevelFuses();
+bool isBODSFlagExistent();
+void checkVCCPeriodically();
+
 const uint8_t VCC_MONITORING_DELAY_MIN = 60; // Check VCC every hour, because this costs extra power.
 uint16_t sVCCMonitoringDelayCounter; // Counter for VCC monitoring.
 
@@ -178,8 +190,12 @@ void sleepDelay(uint16_t aSecondsToSleep);
 void delayMilliseconds(unsigned int aMillis);
 uint16_t readADCChannelWithReferenceOversample(uint8_t aChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
 uint16_t getVCCVoltageMillivolt(void);
-void checkVCCPeriodically();
 void changeDigisparkClock();
+
+#ifdef DEBUG
+void printFuses(void);
+void printBODSFlagExistence();
+#endif
 
 /***********************************************************************************
  * Code starts here
@@ -212,30 +228,43 @@ void setup() {
 
     changeDigisparkClock();
 
+    sBODLevelIsBelow2_7 = (getBODLevelFuses() >= 6);
+
 #ifdef DEBUG
     Serial.print(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\nAlarm delay = "));
     Serial.print(OPEN_WINDOW_ALARM_DELAY_MINUTES);
     Serial.println(F(" minutes"));
+
+    Serial.print(F("Brown Out Detection is "));
+    if (getBODLevelFuses() == 7) {
+        Serial.print(F("disabled => 6"));
+    } else {
+        Serial.print(F("enabled => "));
+        if (isBODSFlagExistent()) {
+            // Can disable BOD for sleep
+            Serial.print(F("6"));
+        } else {
+            Serial.print(F("25"));
+        }
+    }
+    Serial.println(F(" micro Ampere sleep current"));
 #endif
 
 #ifdef TRACE
     Serial.print(F("MCUSR=0x"));
-    Serial.print(sMCUSRStored);
-    Serial.print(F(" LFuse=0x"));
-    Serial.print(boot_lock_fuse_bits_get(GET_LOW_FUSE_BITS));
-    Serial.print(F(" WDTCR=0x"));
-    Serial.print(WDTCR);
-    Serial.print(F(" OSCCAL=0x"));
-    Serial.println(OSCCAL);
+    Serial.println(sMCUSRStored, HEX);
+    Serial.print(F("WDTCR=0x"));
+    Serial.println(WDTCR, HEX);
+    Serial.print(F("OSCCAL=0x"));
+    Serial.println(OSCCAL, HEX);
+    printBODSFlagExistence();
+    printFuses();
 #endif
 
     /*
      * init sleep mode and wakeup period
      */
     initPeriodicSleepWithWatchdog(SLEEP_MODE_PWR_DOWN, WDTO_8S);
-// disable Arduino delay() and millis() timer0 and also its interrupts which kills the deep sleep.
-    TCCR0B = 0; // No clock selected
-    TIMSK = 0;
 
     /*
      * Initialize ADC channel and reference
@@ -248,7 +277,7 @@ void setup() {
 #ifdef DEBUG
     Serial.print(F("Booting from "));
 #endif
-    if (sMCUSRStored & (1 << PORF)) {
+    if (sMCUSRStored & _BV(PORF)) {
         PWMtone(OPEN_WINDOW_ALARM_FREQUENCY_HIGH, 100);
 #ifdef DEBUG
         Serial.println(F("power up"));
@@ -296,7 +325,10 @@ void setup() {
 
 // disable digital input buffer to save power
 // do not disable buffer for outputs whose values are read back
-    DIDR0 = (1 << ADC1D) | (1 << ADC2D) | (1 << ADC3D) | (1 << AIN1D) | (1 << AIN0D);
+    DIDR0 = _BV(ADC1D) | _BV(ADC2D) | _BV(ADC3D) | _BV(AIN1D) | _BV(AIN0D);
+
+    // This disables Arduino delay() and millis() timer 0 and also its interrupts which kills the deep sleep.
+    PRR = _BV(PRTIM0) | _BV(PRUSI); // Disable timer 0 and USI - has no effect on Power Down current
 
     /*
      * wait 8 seconds, since ATtinys temperature is increased after the micronucleus boot process
@@ -311,7 +343,8 @@ void setup() {
  * Check if window was just opened.
  * If window was opened check if window still open -> ALARM
  * Loop needs 2.1 ms and with DEBUG 6.5 ms => active time is ca. 1/10k or 1/4k of total time and power consumption is 500 times more than sleep.
- * 2 ms for Temperature reading
+ * The sleep wakeup time for PLL clock
+ * 2 ms for temperature reading
  * 0.25 ms for processing
  * 0.05 ms for LED flashing
  *  + 4.4 ms for DEBUG
@@ -467,16 +500,17 @@ void changeDigisparkClock() {
 void PWMtone(unsigned int aFrequency, unsigned int aDurationMillis) {
 
     // Determine which prescaler to use, we are running with 1 MHz now
-    uint32_t tOCR = 1000000L / aFrequency;
     uint8_t tPrescaler = 0x01;
-    while (tOCR > 0xff && tPrescaler < 15) {
+    uint16_t tOCR = 1000000 / aFrequency; // cannot use F_CPU since clock is set to 1 MHz at runtime
+    while (tOCR > 0x100 && tPrescaler < 0x0F) {
         tPrescaler++;
         tOCR >>= 1;
 
     }
-    OCR1C = tOCR - 1;
+
+    OCR1C = tOCR - 1; // The frequency of the PWM will be Timer Clock 1 Frequency divided by (OCR1C value + 1).
     OCR1B = OCR1C / 2; // set PWM to 50%
-    GTCCR = (1 << PWM1B) | (1 << COM1B0); // Switch to PWM Mode with OC1B (PB4) + !OC1B (PB3) outputs enabled
+    GTCCR = _BV(PWM1B) | _BV(COM1B0); // Switch to PWM Mode with OC1B (PB4) + !OC1B (PB3) outputs enabled
     TCCR1 = (tPrescaler << CS10);
 
     delayMilliseconds(aDurationMillis);
@@ -649,7 +683,7 @@ void playDoubleClick() {
 void delayAndSignalOpenWindowDetectionAndLowVCC() {
     if (sOpenWindowDetected) {
         sOpenWindowDetectedOld = true;
-        PWMtone(OPEN_WINDOW_ALARM_FREQUENCY_HIGH, 2); // 2 ms can be heard as click
+        PWMtone(OPEN_WINDOW_ALARM_FREQUENCY_HIGH, 2); // 2 ms can be heard as a click
         delayMicroseconds(20000); // to let the led light longer
 
     } else if (sOpenWindowDetectedOld) {
@@ -658,15 +692,29 @@ void delayAndSignalOpenWindowDetectionAndLowVCC() {
         playDoubleClick();
 
     } else if (sVCCVoltageTooLow) {
-        PWMtone(OPEN_WINDOW_ALARM_FREQUENCY_VCC_TOO_LOW, 2); // Use a different frequency to distinguish the this alert from others
+        PWMtone(OPEN_WINDOW_ALARM_FREQUENCY_VCC_TOO_LOW, 40); // Use also a different frequency to distinguish this alert from others
     } else {
         delayMicroseconds(LED_PULSE_LENGTH - 150);  // - 150 for the duration from digitalWrite(LED_PIN, 1) until here
     }
 }
 
+/*
+ * In Power Down sleep mode we have the watchdog running and ADC disabled, but powered.
+ * This needs 5.6 uA.
+ * If BOD is enabled by fuses -which is default for Digispark boards- we need additionally 20 uA resulting in 26 uA current.
+ */
 void sleepDelay(uint16_t aSecondsToSleep) {
     ADCSRA = 0; // disable ADC -> saves 150 - 200 uA
     for (uint16_t i = 0; i < (aSecondsToSleep / 8); ++i) {
+        /*
+         * Turn off the brown-out detector - but this works only for ATtiny85 revision C, which is hardly seen in the wild :-(.
+         * It can save additional 20 uA if BOD is enabled by fuses
+         */
+        sleep_bod_disable()
+        ;
+//        uint8_t tMcucrValue = MCUCR | _BV(BODS) | _BV(BODSE);  // set to one
+//        MCUCR = tMcucrValue; // set both flags to one
+//        MCUCR = tMcucrValue & ~_BV(BODSE); // reset BODSE within 4 clock cycles
         sleep_cpu()
         ;
     }
@@ -736,15 +784,23 @@ void checkVCCPeriodically() {
         Serial.print(F("VCC="));
         Serial.print(sVCCVoltageMillivolt);
         Serial.print(F("mV - "));
-        if (sLIPOSupplyDetected) {
-            Serial.print(F("LIPO"));
+        if (sVCCVoltageMillivolt > VCC_VOLTAGE_USB_DETECTION) {
+            Serial.print(F("USB"));
         } else {
-            Serial.print(F("standard or button cell"));
+            if (sLIPOSupplyDetected) {
+                Serial.print(F("LIPO"));
+            } else {
+                Serial.print(F("standard or button cell"));
+            }
         }
         Serial.println(" detected");
 #endif
         if ((sLIPOSupplyDetected && sVCCVoltageMillivolt < VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_LIPO)
-                || (!sLIPOSupplyDetected && sVCCVoltageMillivolt < VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD)) {
+                || (!sLIPOSupplyDetected
+                        && ((sBODLevelIsBelow2_7 && sVCCVoltageMillivolt < VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD)
+                                || (!sBODLevelIsBelow2_7 && sVCCVoltageMillivolt < VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD_BOD2_7)))
+
+                ) {
             sVCCVoltageTooLow = true;
             sVCCMonitoringDelayCounter = 4; // VCC too low -> check every 2 minutes
         } else {
@@ -781,3 +837,165 @@ void initPeriodicSleepWithWatchdog(uint8_t tSleepMode, uint8_t aWatchdogPrescale
 ISR(WDT_vect) {
     ;
 }
+
+uint8_t getBODLevelFuses() {
+    return boot_lock_fuse_bits_get(GET_HIGH_FUSE_BITS) & (~FUSE_BODLEVEL2 | ~FUSE_BODLEVEL1 | ~FUSE_BODLEVEL0 );
+}
+
+/*
+ * @return true if BODS flag is existent - should be true for ATtiny85 revision C and later
+ */
+bool isBODSFlagExistent() {
+    sleep_bod_disable()
+    ;
+    /*
+     * Check if flag can be set - this works only for ATtini85 revision C, which is hardly seen in the wild.
+     */
+    return MCUCR & _BV(BODS);
+}
+
+#ifdef DEBUG
+/*
+ * Output description for all fuses except "DebugWire enabled"
+ */
+void printFuses(void) {
+    uint8_t tLowFuseBits = boot_lock_fuse_bits_get(GET_LOW_FUSE_BITS);
+    Serial.print(F("\nLowFuses="));
+    Serial.printHex(tLowFuseBits);
+
+    Serial.print(F("\nClock divide by 8 "));
+    if (tLowFuseBits & ~FUSE_CKDIV8) {
+        Serial.print(F("not "));
+    }
+    Serial.print(F("enabled\n")); // enabled is default
+
+    Serial.print(F("Clock output "));
+    if (tLowFuseBits & ~FUSE_CKOUT) {
+        Serial.print(F("not "));
+    }
+    Serial.print(F("enabled\n")); // enabled is default
+
+    Serial.print(F("Clock select="));
+    uint8_t tClockSelectBits = tLowFuseBits & (~FUSE_CKSEL3 | ~FUSE_CKSEL2 | ~FUSE_CKSEL1 | ~FUSE_CKSEL0 );
+    switch (tClockSelectBits) {
+    case 1:
+        Serial.print(F("16MHz PLL"));
+        break;
+    case 2:
+        Serial.print(F("8MHz")); // default
+        break;
+    case 3:
+        Serial.print(F("6.4MHz"));
+        break;
+    case 4:
+        Serial.print(F("128kHz"));
+        break;
+    case 6:
+        Serial.print(F("32.768kHz"));
+        break;
+    default:
+        Serial.print(F("External"));
+        break;
+    }
+
+    Serial.print(F("\nStart-up time="));
+    uint8_t tStartUptimeBits = tLowFuseBits & (~FUSE_SUT1 | ~FUSE_SUT0 );
+    if (tClockSelectBits == 1) {
+        /*
+         * PLL Clock has other interpretation of tStartUptimeBits
+         */
+        Serial.print(F("14 CK (+ 4ms)"));
+        if (tLowFuseBits & ~FUSE_SUT0) {
+            Serial.print(F("+ 16384 CK")); // -> 1 ms for 16 MHz clock
+        } else {
+            Serial.print(F(" + 1024 CK"));
+        }
+        if (tLowFuseBits & ~FUSE_SUT1) {
+            Serial.print(F(" + 64ms")); // default
+        } else {
+            Serial.print(F(" + 4ms"));
+        }
+    } else {
+        /*
+         * Internal Calibrated RC Oscillator Clock
+         */
+        Serial.print(F("6 (+ 14 CK)"));
+        switch (tStartUptimeBits) {
+        case 0x10:
+            Serial.print(F(" + 4ms"));
+            break;
+        case 0x20:
+            Serial.print(F(" + 64ms")); // default
+            break;
+        default:
+            break;
+        }
+    }
+
+    uint8_t tHighFuseBits = boot_lock_fuse_bits_get(GET_HIGH_FUSE_BITS);
+    Serial.print(F("\n\nHighFuses="));
+    Serial.printHex(tHighFuseBits);
+
+    Serial.print(F("\nReset "));
+    if (tHighFuseBits & ~FUSE_RSTDISBL) {
+        Serial.print(F("not "));
+    }
+    Serial.print(F("disabled\n"));
+
+    Serial.print(F("Serial programming "));
+    if (tHighFuseBits & ~FUSE_SPIEN) {
+        Serial.print(F("not "));
+    }
+    Serial.print(F("enabled\n"));
+
+    Serial.print(F("Watchdog always on "));
+    if (tHighFuseBits & ~FUSE_WDTON) {
+        Serial.print(F("not "));
+    }
+    Serial.print(F("enabled\n"));
+
+    Serial.print(F("Preserve EEPROM "));
+    if (tHighFuseBits & ~FUSE_EESAVE) {
+        Serial.print(F("not "));
+    }
+    Serial.print(F("enabled\n"));
+
+    Serial.print(F("Brown-out="));
+    uint8_t tBrownOutDetectionBits = tHighFuseBits & (~FUSE_BODLEVEL2 | ~FUSE_BODLEVEL1 | ~FUSE_BODLEVEL0 );
+    switch (tBrownOutDetectionBits) {
+    // 0-3 are reserved codes (for ATtiny)
+    case 4:
+        Serial.print(F("4.3V"));
+        break;
+    case 5:
+        Serial.print(F("2.7V"));
+        break;
+    case 6:
+        Serial.print(F("1.8V"));
+        break;
+    case 7:
+        Serial.print(F("disabled"));
+        break;
+    default:
+        break;
+    }
+
+    uint8_t tExtFuseBits = boot_lock_fuse_bits_get(GET_EXTENDED_FUSE_BITS);
+    Serial.print(F("\n\nExtFuses="));
+    Serial.printHex(tExtFuseBits);
+    Serial.print(F("\nSelf programming "));
+    if (tExtFuseBits & ~FUSE_SELFPRGEN) {
+        Serial.print(F("not "));
+    }
+    Serial.println(F("enabled\n"));
+}
+
+void printBODSFlagExistence() {
+    Serial.print(F("BODS flag "));
+    if (!isBODSFlagExistent()) {
+        Serial.print(F("not "));
+    }
+    Serial.println(F("existent"));
+}
+
+#endif

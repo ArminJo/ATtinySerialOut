@@ -1,5 +1,5 @@
-# Attiny Serial Out
-
+# [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
+### Version 1.0.1
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
@@ -13,7 +13,7 @@ Minimal bit-bang send serial
 ### Provides Serial.print / println functions for easy software porting. 
 ### Code size is only 76 Bytes@38400 baud or 196 Bytes@115200 baud (including first call)
 ### Default TX pin is PB2 on a ATtiny85.
-To change the output pin, just modify line 38 in TinySerialOut.h. You will find the file in the Arduino IDE under "Sketch/Show Sketch Folder" (or Ctrl+K) and then in the libraries/TinySerialOut/src directory. Or set it as compiler symbol like "-DTX_PIN PB1".
+To change the output pin, just modify line 38 in `TinySerialOut.h`. You will find the file in the Arduino IDE under *Sketch/Show Sketch Folder (Ctrl+K)* and then in the `libraries/TinySerialOut/src` directory. Or define global symbol with `-DTX_PIN PB1` which is not yet possible in Arduino IDE:-(.
 
 ## Serial functions provided (linefeed is \n instead of \r\n):
 ```   
@@ -41,8 +41,19 @@ To change the output pin, just modify line 38 in TinySerialOut.h. You will find 
     void println(void);
 ```
 
+# Revision History
+### Version 1.0.2
+- printHex() now using capital letters
+- Improved OpenWindowAlarm example 
+### Version 1.0.1
+- Renamed example to be consistent
+### Version 1.0.0
+Initial Arduino library version
+
 ### Remark
 C version of serial code is included for better understanding, but assembler version is used. This is because for the C code the timing depends on compiler optimisation switches. You should get the right timing if you compile the C code it with Arduino standard settings or:
 ```
 avr-g++ -I"C:\arduino\hardware\arduino\avr\cores\arduino" -I"C:\arduino\hardware\arduino\avr\variants\standard" -c -g -w -Os -ffunction-sections -fdata-sections -mmcu=attiny85 -DF_CPU=1000000UL -MMD -o "TinySerialOut.o" "TinySerialOut.cpp"
 ```
+
+#### If you find this library useful, please give it a star.

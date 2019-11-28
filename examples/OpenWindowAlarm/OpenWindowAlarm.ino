@@ -635,10 +635,10 @@ void alarm() {
     }
 
 #ifdef DEBUG
-    Serial.println(F("After 10 minutes alarm now play it for 10 s with 24 to 600 s delay"));
+    Serial.println(F("After 10 minutes continuous alarm play it now for 10 seconds with increasing delay starting at 24 seconds"));
 #endif
 
-    uint16_t tDelay = 24;
+    uint16_t tDelay = 24; // begin with 24 s, end at 600 s (5 minutes)
     /*
      * initialize history with current temperature to detect increasing values
      */

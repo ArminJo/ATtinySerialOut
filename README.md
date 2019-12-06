@@ -1,5 +1,5 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
-### Version 1.0.1
+### Version 1.0.3
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
@@ -13,7 +13,10 @@ Minimal bit-bang send serial
 ### Provides Serial.print / println functions for easy software porting. 
 ### Code size is only 76 Bytes@38400 baud or 196 Bytes@115200 baud (including first call)
 ### Default TX pin is PB2 on a ATtiny85.
-To change the output pin, just modify line 38 in `TinySerialOut.h`. You will find the file in the Arduino IDE under *Sketch/Show Sketch Folder (Ctrl+K)* and then in the `libraries/TinySerialOut/src` directory. Or define global symbol with `-DTX_PIN PB1` which is not yet possible in Arduino IDE:-(.
+To change the output pin, just modify line 38 in `TinySerialOut.h`. You will find the file in the Arduino IDE under *Sketch/Show Sketch Folder (Ctrl+K)* and then in the `libraries/TinySerialOut/src` directory. Or define global symbol with `-DTX_PIN PB1` which is not yet possible in Arduino IDE:-(.<br/>
+Consider to use [Sloeber](http://eclipse.baeyens.it/stable.php?OS=Windows) as IDE<br/>
+If you are using Sloeber as your IDE, you can easily define global symbols at *Properties/Arduino/CompileOptions*.<br/>
+![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 ## Serial functions provided (linefeed is \n instead of \r\n):
 ```   
@@ -40,8 +43,12 @@ To change the output pin, just modify line 38 in `TinySerialOut.h`. You will fin
 
     void println(void);
 ```
+## [OpenWindowAlarm example](https://raw.githubusercontent.com/ArminJo/ATtinySerialOut/master/examples/OpenWindowAlarm/OpenWindowAlarm.ino)
+This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+### Version 1.0.3
+- OpenWindowAlarm example updated
 ### Version 1.0.2
 - printHex() now using capital letters
 - Improved OpenWindowAlarm example 

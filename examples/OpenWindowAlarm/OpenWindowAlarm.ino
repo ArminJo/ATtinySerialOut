@@ -75,8 +75,10 @@
 #include <avr/sleep.h> // needed for sleep_enable()
 #include <avr/wdt.h>   // needed for WDTO_8S
 
-#define VERSION "1.3.0"
+#define VERSION "1.3.1"
 /*
+ * Version 1.3.1
+ * - Check for closed window happens only the first 10 minutes of alarm.
  * Version 1.3.0
  * - Changed voltage low detection.
  * - Improved DEBUG output.
@@ -207,7 +209,7 @@ void setup() {
      * store MCUSR early for later use
      */
     sMCUSRStored = MCUSR;
-    MCUSR = 0; // to prepare for next reset or power on
+    MCUSR = 0; // Must be set to 0 to  prepare for next reset or power on
 
 #ifdef DEBUG
     /*
@@ -620,6 +622,10 @@ void alarm() {
     // after 80 seconds the new (increased) temperature is stable
 
     // prepare for new temperature check - reset history
+#ifdef DEBUG
+    Serial.println(F("After 120 seconds prepare for new temperature check -> reset history"));
+    Serial.println(F("Play alarm for 480 seconds and check for rising temperature every 30 seconds"));
+#endif
     resetHistory();
 
     // remaining 480 seconds - check temperature while generating alarm tone
@@ -640,12 +646,9 @@ void alarm() {
 
     uint16_t tDelay = 24; // begin with 24 s, end at 600 s (5 minutes)
     /*
-     * initialize history with current temperature to detect increasing values
+     * Do not check for rising temperature here, since it may break a valid alarm.
+     * The alarm last for 10 minutes now and no rising temperature could be detected in this time, so it makes no sense here.
      */
-    resetHistory();
-    for (uint8_t i = 0; i < TEMPERATURE_COMPARE_DISTANCE; ++i) {
-        readTempAndManageHistory();
-    }
     while (true) {
 #ifdef DEBUG
         Serial.print(F("Alarm pause for "));
@@ -653,14 +656,6 @@ void alarm() {
         Serial.println(F(" seconds"));
 #endif
         sleepDelay(tDelay); // Start with 24 seconds
-        /*
-         * check if temperature is rising at end of break interval
-         */
-        readTempAndManageHistory();
-        if (sTemperatureNewSum >= sTemperatureAtWindowOpen + TEMPERATURE_COMPARE_AMOUNT) {
-            return;
-        }
-
         playAlarmSignalSeconds(10);
         noTone(TONE_PIN);
         if (tDelay < 600) { // up to 5 minutes

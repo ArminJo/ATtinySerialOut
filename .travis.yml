@@ -1,51 +1,27 @@
 language: c
-sudo: false
+sudo: true
 cache:
-  directories:
-  - ~/arduino_ide
-  - ~/.arduino15/packages/
+   directories:
+   - ~/arduino_ide
+   - ~/.arduino15/packages/
 git:
-  depth: false
-  quiet: true
+   depth: false
+   quiet: true
 env:
-  global:
-  - PRETTYNAME="ATtinySerialOut"
-  - CLI_VERSION=latest
+   global:
+   - PRETTYNAME="ATtinySerialOut"
+   - INSTALL_PLATFORMS="ATTinyCore,digistump"
+#--verbose --verbose-build --version
+   - ARDUINO_SWITCHES="--verbose-build"
 before_install:
-#- echo "Removing last CLI version of the Arduino IDE..."
-#- rm -rf arduino-cli*
-- echo "Downloading latest CLI version of the Arduino IDE..."
-- wget http://downloads.arduino.cc/arduino-cli/arduino-cli-$CLI_VERSION-linux64.tar.bz2
-- echo "Extracting the Arduino IDE..."
-- tar xf arduino-cli-$CLI_VERSION-linux64.tar.bz2
-- ls -la
-- echo "Moving Arduino IDE..."
-- mkdir -p $HOME/bin
-- mv arduino-cli $HOME/bin/arduino-cli
-- export PATH=$PATH:$HOME/bin
-#- echo $PWD
-#- ls -la
-- echo "Update platform indexes..."
-# parameter is needed :-(
-- arduino-cli core update-index
-- echo "Install board..."
-# parameter is needed :-(
-#- arduino-cli core install digistump:avr
-- arduino-cli core install ATTinyCore:avr
-#- echo "Show all boards now available..."
-#- arduino-cli board listall
-install:
-- mkdir -p $HOME/Arduino/libraries
-- ln -s $PWD $HOME/Arduino/libraries/.
+- source <(curl -SLs https://raw.githubusercontent.com/ArminJo/travis-ci-arduino/master/install.sh)
+install: null
 script:
-# 1MHz ATtiny
-# Digispark is missing line for recipe.output.tmp_file in boards.txt
-#- arduino-cli compile --warnings all --fqbn digistump:avr:digispark-tiny1 OpenWindowAlarm
-- arduino-cli compile --warnings all --fqbn ATTinyCore:avr:attinyx5 examples/ATtinySerialOutExample
-- arduino-cli compile --warnings all --fqbn ATTinyCore:avr:attinyx5 examples/OpenWindowAlarm
+- build_platform ATtiny85_1MHz
+- build_platform Digispark_1MHz
 notifications:
-  email:
-    recipients:
+   email:
+      recipients:
       - armin.arduino@gmail.com
-    on_success: always
-    on_failure: always
+      on_success: always
+      on_failure: always

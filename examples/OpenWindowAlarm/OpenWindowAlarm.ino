@@ -110,7 +110,7 @@ const uint8_t OPEN_WINDOW_SAMPLES = (OPEN_WINDOW_ALARM_DELAY_MINUTES * 60) / TEM
 const uint8_t TEMPERATURE_COMPARE_AMOUNT = 2;
 const uint8_t TEMPERATURE_COMPARE_DISTANCE = 8; // 3 minutes and 12 seconds
 // Array to hold enough values to compare TEMPERATURE_COMPARE_AMOUNT values with the same amount of values TEMPERATURE_COMPARE_DISTANCE positions before
-uint16_t sTemperatureArray[(TEMPERATURE_COMPARE_AMOUNT + TEMPERATURE_COMPARE_DISTANCE + TEMPERATURE_COMPARE_AMOUNT)];
+uint16_t sTemperatureArray[(TEMPERATURE_COMPARE_AMOUNT + TEMPERATURE_COMPARE_DISTANCE + TEMPERATURE_COMPARE_AMOUNT)]; // value at 0 is newest one
 
 /*
  * Temperature values

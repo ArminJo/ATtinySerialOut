@@ -1,4 +1,0 @@
-board_manager:
-  additional_urls:
-    - http://digistump.com/package_digistump_index.json
-    - http://drazzy.com/package_drazzy.com_index.json

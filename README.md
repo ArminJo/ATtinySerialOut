@@ -47,10 +47,12 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+### Version 1.0.4
+- changed label `loop` to `txloop` in `write1Start8Data1StopNoParity()` for 38400 baud
 ### Version 1.0.3
 - OpenWindowAlarm example updated
 ### Version 1.0.2
-- printHex() now using capital letters
+- `printHex()` now using capital letters
 - Improved OpenWindowAlarm example 
 ### Version 1.0.1
 - Renamed example to be consistent

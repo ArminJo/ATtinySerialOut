@@ -136,7 +136,7 @@ const uint16_t VCC_VOLTAGE_USB_DETECTION = 4300; // Above 4.3 volt we assume tha
 const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_LIPO = 3550; // 3.7 volt is the normal operating voltage if powered by a LiPo battery
 const uint16_t VCC_VOLTAGE_LIPO_DETECTION = 3450; // Above 3.45 volt we assume that a LIPO battery is attached, below we assume a CR2032 or two AA or AAA batteries are attached.
 const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD = 2600; // 3.0 volt is normal operating voltage if powered by a CR2032 or two AA or AAA batteries.
-const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD_BOD2_7 = 2800; // BOD is at 2.7 Volt typically, so we cannot get values below that
+const uint16_t VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD_BOD2_7 = 2800; // BOD is at 2.7 volt typically, so we cannot get values below that
 
 uint16_t sVCCVoltageMillivolt;
 bool sVCCVoltageTooLow;

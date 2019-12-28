@@ -195,23 +195,28 @@ void writeUnsignedByte(uint8_t aByte) {
  * 2 Byte Hex output with 2 Byte prefix "0x"
  */
 void writeUnsignedByteHexWithPrefix(uint8_t aByte) {
-    char tStringBuffer[5];
-    tStringBuffer[0] = '0';
-    tStringBuffer[1] = 'x';
-    utoa(aByte, &tStringBuffer[2], 16);
-    if (tStringBuffer[3] == '\0') {
-        tStringBuffer[4] = '\0';
-        tStringBuffer[3] = tStringBuffer[2];
-        tStringBuffer[2] = '0';
+    writeBinary('0');
+    writeBinary('x');
+    writeUnsignedByteHex(aByte);
+}
+
+char nibbleToHex(uint8_t aByte) {
+    aByte = aByte & 0x0F;
+    if (aByte < 10) {
+        return aByte + '0';
     }
-    writeString(tStringBuffer);
+    return aByte + 'A' - 10;
 }
 
 /*
- * 2 Byte Hex output if it must be short :-)
+ * 2 Byte Hex output
  */
 void writeUnsignedByteHex(uint8_t aByte) {
     char tStringBuffer[3];
+    //    tStringBuffer[0] = nibbleToHex(aByte >> 4);
+    //    tStringBuffer[1] = nibbleToHex(aByte);
+    //    tStringBuffer[2] = '\0';
+    // the utoa() version is 8 bytes smaller than the version with nibbleToHex(), if utoa() is allocated by another function.
     utoa(aByte, &tStringBuffer[0], 16);
     if (tStringBuffer[1] == '\0') {
         tStringBuffer[2] = '\0';
@@ -307,6 +312,18 @@ void TinySerialOut::end() {
 void TinySerialOut::flush() {
     // no action needed, since we do not use a buffer
 }
+// virtual functions of Print class
+size_t TinySerialOut::write(uint8_t aByte) {
+    writeBinary(aByte);
+    return 1;
+}
+
+size_t TinySerialOut::write(const uint8_t *buffer, size_t size) {
+    for (size_t i = 0; i < size; ++i) {
+        write(*buffer);
+    }
+    return size;
+}
 
 void TinySerialOut::print(const char* aStringPtr) {
     writeString(aStringPtr);
@@ -325,14 +342,7 @@ void TinySerialOut::print(uint8_t aByte, uint8_t aBase) {
         /*
          * Print Hex always with two characters
          */
-        char tStringBuffer[3];
-        utoa(aByte, &tStringBuffer[0], aBase);
-        if (tStringBuffer[1] == '\0') {
-            tStringBuffer[2] = '\0';
-            tStringBuffer[1] = tStringBuffer[0];
-            tStringBuffer[0] = '0';
-        }
-        writeString(tStringBuffer);
+        writeUnsignedByteHex(aByte);
     } else {
         char tStringBuffer[4];
         utoa(aByte, tStringBuffer, aBase);
@@ -370,25 +380,26 @@ void TinySerialOut::print(double aFloat, uint8_t aDigits) {
     writeStringSkipLeadingSpaces(tStringBuffer);
 }
 
-char nibbleToHex(uint8_t aByte) {
-    aByte = aByte & 0x0F;
-    if (aByte < 10) {
-        return aByte + '0';
-    }
-    return aByte + 'A' - 10;
-}
-
 /*
  * 2 Byte Hex output with 2 Byte prefix "0x"
  */
 void TinySerialOut::printHex(uint8_t aByte) {
-    char tStringBuffer[5];
-    tStringBuffer[0] = '0';
-    tStringBuffer[1] = 'x';
-    tStringBuffer[2] = nibbleToHex(aByte >> 4);
-    tStringBuffer[3] = nibbleToHex(aByte);
-    tStringBuffer[4] = '\0';
-    writeString(tStringBuffer);
+    writeUnsignedByteHexWithPrefix(aByte);
+}
+
+void TinySerialOut::printHex(uint16_t aWord) {
+    writeUnsignedByteHexWithPrefix(aWord >> 8);
+    writeUnsignedByteHex(aWord);
+}
+
+void TinySerialOut::printlnHex(uint8_t aByte) {
+    printHex(aByte);
+    print('\n');
+}
+
+void TinySerialOut::printlnHex(uint16_t aWord) {
+    printHex(aWord);
+    print('\n');
 }
 
 void TinySerialOut::println(const char* aStringPtr) {
@@ -659,7 +670,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             // Start of loop
             // if (aValue & 0x01) {
-            "loop:"
+            "txloop:"
             "sbrs %[value] , 0" "\n\t"// 1
             "rjmp .+6" "\n\t"// 2
 
@@ -702,7 +713,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 
             // }while (i > 0);
             "subi r25 , 0x01" "\n\t"// 1
-            "brne loop" "\n\t"// 1-2
+            "brne txloop" "\n\t"// 1-2
             // To compensate for missing loop cycles at last bit
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1

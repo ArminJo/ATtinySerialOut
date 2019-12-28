@@ -1,5 +1,5 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
-### Version 1.0.3
+### Version 1.0.5
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
@@ -47,17 +47,26 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+
+### Version 1.0.5
+- Symbol TINY_SERIAL_INHERIT_FROM_PRINT - if defined, you can use this class as a replacement for standard Serial as a print class.
+- improved all ...Hex() functions.
+
 ### Version 1.0.4
-- changed label `loop` to `txloop` in `write1Start8Data1StopNoParity()` for 38400 baud
+- changed label `loop` to `txloop` in `write1Start8Data1StopNoParity()` for 38400 baud.
+
 ### Version 1.0.3
-- OpenWindowAlarm example updated
+- OpenWindowAlarm example updated.
+
 ### Version 1.0.2
-- `printHex()` now using capital letters
-- Improved OpenWindowAlarm example 
+- `printHex()` now using capital letters.
+- Improved OpenWindowAlarm example.
+
 ### Version 1.0.1
-- Renamed example to be consistent
+- Renamed example to be consistent.
+
 ### Version 1.0.0
-Initial Arduino library version
+Initial Arduino library version.
 
 ### Remark
 C version of serial code is included for better understanding, but assembler version is used. This is because for the C code the timing depends on compiler optimisation switches. You should get the right timing if you compile the C code it with Arduino standard settings or:

@@ -111,10 +111,13 @@ inline void writeValue(uint8_t aValue) {
 }
 
 // The same class as for plain arduino
+#if defined(ARDUINO_AVR_DIGISPARK)
 // The digispark library defines (2/2019) F but not __FlashStringHelper
-#if not defined(F) || defined(ARDUINO_AVR_DIGISPARK)
+//# define F(string_literal) ((fstr_t*)PSTR(string_literal))
+#define __FlashStringHelper fstr_t
+#endif
+#if not defined(F)
 class __FlashStringHelper;
-#undef F
 #define F(string_literal) (reinterpret_cast<const __FlashStringHelper *>(PSTR(string_literal)))
 #endif
 

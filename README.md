@@ -48,9 +48,10 @@ This example issues an alarm if the chip sensor detect a falling teperarure and 
 
 # Revision History
 
-### Version 1.0.5
+### Version 1.0.5 - 1/2020
 - Symbol TINY_SERIAL_INHERIT_FROM_PRINT - if defined, you can use this class as a replacement for standard Serial as a print class.
 - improved all ...Hex() functions.
+- define FlashStringHelper for digispark.
 
 ### Version 1.0.4
 - changed label `loop` to `txloop` in `write1Start8Data1StopNoParity()` for 38400 baud.

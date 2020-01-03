@@ -287,7 +287,11 @@ TinySerialOut Serial;
  * Member functions for TinySerialOut
  */
 
+/*
+ * An alternative way to call the init function :-)
+ */
 void TinySerialOut::begin(long aBaudrate) {
+    initTXPin();
 #if defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1 MHz
     if (aBaudrate != 115200) {
         println(F("Only 115200 supported!"));
@@ -312,18 +316,36 @@ void TinySerialOut::end() {
 void TinySerialOut::flush() {
     // no action needed, since we do not use a buffer
 }
+
+/*
+ * 2 Byte Hex output with 2 Byte prefix "0x"
+ */
+void TinySerialOut::printHex(uint8_t aByte) {
+    writeUnsignedByteHexWithPrefix(aByte);
+}
+
+void TinySerialOut::printHex(uint16_t aWord) {
+    writeUnsignedByteHexWithPrefix(aWord >> 8);
+    writeUnsignedByteHex(aWord);
+}
+
+void TinySerialOut::printlnHex(uint8_t aByte) {
+    printHex(aByte);
+    println();
+}
+
+void TinySerialOut::printlnHex(uint16_t aWord) {
+    printHex(aWord);
+    println();
+}
+
 // virtual functions of Print class
 size_t TinySerialOut::write(uint8_t aByte) {
     writeBinary(aByte);
     return 1;
 }
 
-size_t TinySerialOut::write(const uint8_t *buffer, size_t size) {
-    for (size_t i = 0; i < size; ++i) {
-        write(*buffer);
-    }
-    return size;
-}
+#if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
 
 void TinySerialOut::print(const char* aStringPtr) {
     writeString(aStringPtr);
@@ -380,71 +402,51 @@ void TinySerialOut::print(double aFloat, uint8_t aDigits) {
     writeStringSkipLeadingSpaces(tStringBuffer);
 }
 
-/*
- * 2 Byte Hex output with 2 Byte prefix "0x"
- */
-void TinySerialOut::printHex(uint8_t aByte) {
-    writeUnsignedByteHexWithPrefix(aByte);
-}
-
-void TinySerialOut::printHex(uint16_t aWord) {
-    writeUnsignedByteHexWithPrefix(aWord >> 8);
-    writeUnsignedByteHex(aWord);
-}
-
-void TinySerialOut::printlnHex(uint8_t aByte) {
-    printHex(aByte);
-    print('\n');
-}
-
-void TinySerialOut::printlnHex(uint16_t aWord) {
-    printHex(aWord);
-    print('\n');
-}
-
 void TinySerialOut::println(const char* aStringPtr) {
     print(aStringPtr);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println(const __FlashStringHelper * aStringPtr) {
     print(aStringPtr);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println(uint8_t aByte, uint8_t aBase) {
     print(aByte, aBase);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println(int aInteger, uint8_t aBase) {
     print(aInteger, aBase);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println(unsigned int aInteger, uint8_t aBase) {
     print(aInteger, aBase);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println(long aLong, uint8_t aBase) {
     print(aLong, aBase);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println(unsigned long aLong, uint8_t aBase) {
     print(aLong, aBase);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println(double aFloat, uint8_t aDigits) {
     print(aFloat, aDigits);
-    print('\n');
+    println();
 }
 
 void TinySerialOut::println() {
+    print('\r');
     print('\n');
 }
+#endif // !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
 
 /********************************
  * Basic serial output function

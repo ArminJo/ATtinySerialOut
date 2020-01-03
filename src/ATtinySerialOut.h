@@ -81,9 +81,9 @@
 
 /*
  * Define or comment this out, if you want to use this class as a replacement for standard Serial as the print class
+ * Adds around 800 Bytes of code
  */
 //#define TINY_SERIAL_INHERIT_FROM_PRINT
-
 /*
  * Define or comment this out, if you want to save code size and if you can live with 87 micro seconds intervals of disabled interrupts for each sent byte.
  */
@@ -142,22 +142,26 @@ void writeFloat(double aFloat, uint8_t aDigits);
 char nibbleToHex(uint8_t aByte);
 
 #if defined(TINY_SERIAL_INHERIT_FROM_PRINT)
-// needs 10 bytes Flash (for nothing???)
-class TinySerialOut : public Print
+class TinySerialOut: public Print
 #else
 class TinySerialOut
 #endif
 {
 public:
 
-    // virtual functions of Print class
-    size_t write(uint8_t aByte);
-    size_t write(const uint8_t *buffer, size_t size);
-
     void begin(long);
     void end();
     void flush(void);
 
+    void printHex(uint8_t aByte); // with 0x prefix
+    void printHex(uint16_t aWord); // with 0x prefix
+    void printlnHex(uint8_t aByte); // with 0x prefix
+    void printlnHex(uint16_t aWord); // with 0x prefix
+
+    // virtual functions of Print class
+    size_t write(uint8_t aByte);
+
+#if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
     void print(const __FlashStringHelper * aStringPtr);
     void print(const char* aStringPtr);
     void print(char aChar);
@@ -167,11 +171,6 @@ public:
     void print(long aLong, uint8_t aBase = 10);
     void print(unsigned long aLong, uint8_t aBase = 10);
     void print(double aFloat, uint8_t aDigits = 2);
-
-    void printHex(uint8_t aByte); // with 0x prefix
-    void printHex(uint16_t aWord); // with 0x prefix
-    void printlnHex(uint8_t aByte); // with 0x prefix
-    void printlnHex(uint16_t aWord); // with 0x prefix
 
     void println(const char* aStringPtr);
     void println(const __FlashStringHelper * aStringPtr);
@@ -184,6 +183,8 @@ public:
     void println(double aFloat, uint8_t aDigits = 2);
 
     void println(void);
+#endif // TINY_SERIAL_INHERIT_FROM_PRINT
+
 };
 
 // #if ... to be compatible with ATTinyCores and AttinyDigisparkCores

@@ -7,7 +7,7 @@
  * 1 Start, 8 Data, 1 Stop, No Parity
  *
  * Using PB2 // (Pin7 on Tiny85) as default TX pin to be compatible with digispark board
- * To change the output pin, modify line 38 in TinySerialOut.h or or set it as compiler symbol like "-DTX_PIN PB1".
+ * To change the output pin, modify the line "#define TX_PIN ..." in TinySerialOut.h or or set it as compiler symbol like "-DTX_PIN PB1".
  *
  * Using the Serial.print commands needs 4 bytes extra for each call.
  *

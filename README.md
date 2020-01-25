@@ -13,8 +13,8 @@ Minimal bit-bang send serial
 ### Provides Serial.print / println functions for easy software porting. 
 ### Code size is only 76 Bytes@38400 baud or 196 Bytes@115200 baud (including first call)
 ### Default TX pin is PB2 on a ATtiny85.
-To change the output pin, just modify line 38 in `TinySerialOut.h`. You will find the file in the Arduino IDE under *Sketch/Show Sketch Folder (Ctrl+K)* and then in the `libraries/TinySerialOut/src` directory. Or define global symbol with `-DTX_PIN PB1` which is not yet possible in Arduino IDE:-(.<br/>
-Consider to use [Sloeber](http://eclipse.baeyens.it/stable.php?OS=Windows) as IDE<br/>
+To change the output pin, just modify the line "#define TX_PIN ..." in `TinySerialOut.h`. You will find the file in the Arduino IDE under *Sketch/Show Sketch Folder (Ctrl+K)* and then in the `libraries/TinySerialOut/src` directory. Or define global symbol with `-DTX_PIN PB1` which is not yet possible in Arduino IDE:-(.<br/>
+## Consider to use [Sloeber](http://eclipse.baeyens.it/stable.php?OS=Windows) as IDE<br/>
 If you are using Sloeber as your IDE, you can easily define global symbols at *Properties/Arduino/CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 

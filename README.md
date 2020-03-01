@@ -1,9 +1,9 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
-### Version 1.0.4
+### [Version 1.0.4](https://github.com/ArminJo/ATtinySerialOut/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
-[![Build Status](https://travis-ci.org/ArminJo/ATtinySerialOut.svg?branch=master)](https://travis-ci.org/ArminJo/ATtinySerialOut)
+[![Build Status](https://github.com/ArminJo/ATtinySerialOut/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/ATtinySerialOut/actions)
 [![Hit Counter](https://hitcounter.pythonanywhere.com/count/tag.svg?url=https%3A%2F%2Fgithub.com%2FArminJo%2FATtinySerialOut)](https://github.com/brentvollebregt/hit-counter)
 
 Minimal bit-bang send serial

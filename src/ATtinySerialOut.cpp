@@ -33,13 +33,9 @@
  */
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-
+#include <Arduino.h>
 #include "ATtinySerialOut.h"
-
-#include <avr/io.h>         // for PORTB - is also included by <avr/interrupt.h>
-#include <avr/pgmspace.h>   // for pgm_read_byte()
 #include <avr/eeprom.h>     // for eeprom_read_byte()
-#include <stdlib.h>         // for utoa() etc.
 
 #ifndef _NOP
 #define _NOP()  __asm__ volatile ("nop")
@@ -183,6 +179,11 @@ void writeBinary(uint8_t aByte) {
 
 void writeChar(uint8_t aChar) {
     writeBinary(aChar);
+}
+
+void writeCRLF() {
+    writeBinary('\r');
+    writeBinary('\n');
 }
 
 void writeUnsignedByte(uint8_t aByte) {
@@ -400,6 +401,11 @@ void TinySerialOut::print(double aFloat, uint8_t aDigits) {
     char tStringBuffer[11];
     dtostrf(aFloat, 10, aDigits, tStringBuffer);
     writeStringSkipLeadingSpaces(tStringBuffer);
+}
+
+void TinySerialOut::println(char aChar) {
+    print(aChar);
+    println();
 }
 
 void TinySerialOut::println(const char* aStringPtr) {

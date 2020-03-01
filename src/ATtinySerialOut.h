@@ -24,27 +24,29 @@
 //
 // ATMEL ATTINY85
 //
-//                                         +-\/-+
-//        PCINT5/!RESET/ADC0/dW (D5) PB5  1|    |8  Vcc
-// PCINT3/XTAL1/CLKI/!OC1B/ADC3 (D3) PB3  2|    |7  PB2 (D2) SCK/USCK/SCL/ADC1/T0/INT0/PCINT2 / TX Debug output
-//  PCINT4/XTAL2/CLKO/OC1B/ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1
-//                                   GND  4|    |5  PB0 (D0) MOSI/DI/SDA/AIN0/OC0A/!OC1A/AREF/PCINT0
-//                                         +----+
+//                                               +-\/-+
+//               PCINT5/!RESET/ADC0/dW (5) PB5  1|    |8  VCC
+// USB+   PCINT3/XTAL1/CLKI/!OC1B/ADC3 (3) PB3  2|    |7  PB2 (2) SCK/USCK/SCL/ADC1/T0/INT0/PCINT2 / TX Debug output
+// USB-   PCINT4/XTAL2/CLKO/ OC1B/ADC2 (4) PB4  3|    |6  PB1 (1) MISO/DO/AIN1/OC0B/ OC1A/PCINT1 - (Digispark) LED
+//                                         GND  4|    |5  PB0 (0) MOSI/DI/AIN0/OC0A/!OC1A/SDA/AREF/PCINT0
+//                                               +----+
 
 // ATMEL ATTINY167
+// Pin numbers are for Digispark core
+// Pin numbers in Parenthesis are for ATTinyCore
 //
-//                      +-\/-+
-//    RX  6 (D 0) PA0  1|    |20  PB0 (D  8) 0 OC1AU  TONE  Timer 1 Channel A
-//    TX  7 (D 1) PA1  2|    |19  PB1 (D  9) 1 OC1BU  Internal LED
-//        8 (D 2) PA2  3|    |18  PB2 (D 10) 2 OC1AV  Timer 1 Channel B
-//   INT1 9 (D 3) PA3  4|    |17  PB3 (D 11) 4 OC1BV  connected with 51 Ohm to D- and 3.3 volt Zener.
-//               AVCC  5|    |16  GND
-//               AGND  6|    |15  VCC
-//       10 (D 4) PA4  7|    |14  PB4 (D 12) XTAL1
-//       11 (D 5) PA5  8|    |13  PB5 (D 13) XTAL2
-//       12 (D 6) PA6  9|    |12  PB6 (D 14) 3 INT0  connected with 68 Ohm to D+ (and disconnected 3.3 volt Zener). Is terminated with ~20 kOhm if USB attached :-(
-//        5 (D 7) PA7 10|    |11  PB7 (D 15)
-//                      +----+
+//                    +-\/-+
+//    RX  6 (0) PA0  1|    |20  PB0 (D8)  0 OC1AU  TONE  Timer 1 Channel A
+//    TX  7 (1) PA1  2|    |19  PB1 (9)  1 OC1BU  Internal LED
+//        8 (2) PA2  3|    |18  PB2 (10) 2 OC1AV  Timer 1 Channel B
+//   INT1 9 (3) PA3  4|    |17  PB3 (11) 4 OC1BV  connected with 51 Ohm to D- and 3.3 volt Zener.
+//             AVCC  5|    |16  GND
+//             AGND  6|    |15  VCC
+//       10 (4) PA4  7|    |14  PB4 (12) XTAL1
+//       11 (5) PA5  8|    |13  PB5 (13) XTAL2
+//       12 (6) PA6  9|    |12  PB6 (14) 3 INT0  connected with 68 Ohm to D+ (and disconnected 3.3 volt Zener). Is terminated with ~20 kOhm if USB attached :-(
+//        5 (7) PA7 10|    |11  PB7 (15) RESET
+//                    +----+
 //
 
 #ifndef TINY_SERIAL_OUT_H_
@@ -52,10 +54,6 @@
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 #include <Arduino.h>
-#include <stdint.h>
-#include <stddef.h> // for size_t
-#include <avr/interrupt.h>  // for cli() and sei()
-#include <avr/io.h>
 
 #if (F_CPU != 1000000) &&  (F_CPU != 8000000) &&  (F_CPU != 16000000)
 #error "F_CPU value must be 1000000, 8000000 or 16000000."
@@ -148,6 +146,7 @@ void writeStringSkipLeadingSpaces(const char * aStringPtr);
 
 void writeBinary(uint8_t aByte); // write direct without decoding
 void writeChar(uint8_t aChar); // Synonym for writeBinary
+void writeCRLF();
 void writeByte(int8_t aByte);
 void writeUnsignedByte(uint8_t aByte);
 void writeUnsignedByteHex(uint8_t aByte);

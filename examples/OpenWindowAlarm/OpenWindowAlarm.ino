@@ -107,15 +107,20 @@ const int OPEN_WINDOW_ALARM_FREQUENCY_VCC_TOO_LOW = 1600; // Use a different fre
  */
 const uint16_t TEMPERATURE_SAMPLE_SECONDS = 24;  // Use multiple of 8 here
 const uint8_t OPEN_WINDOW_SAMPLES = (OPEN_WINDOW_ALARM_DELAY_MINUTES * 60) / TEMPERATURE_SAMPLE_SECONDS;
-const uint8_t TEMPERATURE_COMPARE_AMOUNT = 2;
+const uint8_t TEMPERATURE_COMPARE_AMOUNT = 2;   // compare 2 values
 const uint8_t TEMPERATURE_COMPARE_DISTANCE = 8; // 3 minutes and 12 seconds
+// 2. compare for slower decreasing temperatures
+const uint8_t TEMPERATURE_COMPARE_2_DISTANCE = (4 * TEMPERATURE_COMPARE_DISTANCE); // 12 minutes and 48 seconds
+
 // Array to hold enough values to compare TEMPERATURE_COMPARE_AMOUNT values with the same amount of values TEMPERATURE_COMPARE_DISTANCE positions before
-uint16_t sTemperatureArray[(TEMPERATURE_COMPARE_AMOUNT + TEMPERATURE_COMPARE_DISTANCE + TEMPERATURE_COMPARE_AMOUNT)]; // value at 0 is newest one
+const uint8_t TEMPERATURE_ARRAY_SIZE = TEMPERATURE_COMPARE_AMOUNT + TEMPERATURE_COMPARE_DISTANCE + TEMPERATURE_COMPARE_AMOUNT;
+uint16_t sTemperatureArray[TEMPERATURE_ARRAY_SIZE]; // value at 0 is newest one
 
 /*
  * Temperature values
  */
 const uint16_t TEMPERATURE_DELTA_THRESHOLD_DEGREE = 2; // 1 LSB  = 1 Degree Celsius
+const uint16_t TEMPERATURE_DELTA_2_THRESHOLD_DEGREE = (2 * TEMPERATURE_DELTA_THRESHOLD_DEGREE); // 1 LSB  = 1 Degree Celsius
 uint16_t sTemperatureNewSum = 0;
 uint16_t sTemperatureOldSum = 0;
 
@@ -154,8 +159,8 @@ uint16_t sVCCMonitoringDelayCounter; // Counter for VCC monitoring.
 //
 //                                +-\/-+
 //          RESET/ADC0 (D5) PB5  1|    |8  Vcc
-// Tone      ADC3 USB+ (D3) PB3  2|    |7  PB2 (D2) INT0/ADC1 - TX Debug output
-// Tone inv. ADC2 USB- (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1 - (Digispark) LED
+// Tone      USB+ ADC3 (D3) PB3  2|    |7  PB2 (D2) INT0/ADC1 - TX Debug output
+// Tone inv. USB- ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1 - (Digispark) LED
 //                          GND  4|    |5  PB0 (D0) OC0A/AIN0 - Alarm Test if connected to ground
 //                                +----+
 
@@ -199,6 +204,9 @@ void printFuses(void);
 void printBODSFlagExistence();
 #endif
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 /***********************************************************************************
  * Code starts here
  ***********************************************************************************/
@@ -233,9 +241,7 @@ void setup() {
     sBODLevelIsBelow2_7 = (getBODLevelFuses() >= 6);
 
 #ifdef DEBUG
-    Serial.print(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\nAlarm delay = "));
-    Serial.print(OPEN_WINDOW_ALARM_DELAY_MINUTES);
-    Serial.println(F(" minutes"));
+    Serial.println(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\nAlarm delay = ") STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes");
 
     Serial.print(F("Brown Out Detection is "));
     if (getBODLevelFuses() == 7) {
@@ -361,14 +367,13 @@ void loop() {
     /*
      * Check if we are just after boot and temperature is decreasing
      */
-    if ((sTemperatureArray[(sizeof(sTemperatureArray) / sizeof(sTemperatureArray[0])) - 1] == 0)
-            && (sTemperatureArray[(sizeof(sTemperatureArray) / sizeof(sTemperatureArray[0])) - 2] > 0)
-            /*
-             * array is almost full, so check if temperature is lower than at boot time which means,
-             * we ported the sensor from a warm place to its final one
-             * or the window is still open and the user has pushed the reset button to avoid an alarm.
-             */
-            && (sTemperatureArray[0] < sTemperatureArray[(sizeof(sTemperatureArray) / sizeof(sTemperatureArray[0])) - 2])) {
+    if ((sTemperatureArray[TEMPERATURE_ARRAY_SIZE - 1] == 0) && (sTemperatureArray[TEMPERATURE_ARRAY_SIZE - 2] > 0)
+    /*
+     * array is almost full, so check if temperature is lower than at boot time which means,
+     * we ported the sensor from a warm place to its final one
+     * or the window is still open and the user has pushed the reset button to avoid an alarm.
+     */
+    && (sTemperatureArray[0] < sTemperatureArray[TEMPERATURE_ARRAY_SIZE - 2])) {
         // Start from beginning, clear temperature array
 #ifdef DEBUG
         Serial.println(F("Detected porting to a colder place -> reset"));
@@ -383,9 +388,7 @@ void loop() {
             // tTemperatureOldSum can be 0 -> do not use tTemperatureNewSum < tTemperatureOldSum - (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT)
             if (sTemperatureNewSum + (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT) < sTemperatureOldSum) {
 #ifdef DEBUG
-                Serial.print(F("Detected window just opened -> check again in "));
-                Serial.print(OPEN_WINDOW_ALARM_DELAY_MINUTES);
-                Serial.println(F(" minutes"));
+                Serial.println(F("Detected window just opened -> check again in ") STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes");
 #endif
                 sTemperatureMinimumAfterWindowOpen = sTemperatureNewSum;
                 sTemperatureAtWindowOpen = sTemperatureNewSum;
@@ -547,7 +550,7 @@ void playAlarmSignalSeconds(uint16_t aSecondsToPlay) {
 }
 
 void resetHistory() {
-    for (uint8_t i = 0; i < (sizeof(sTemperatureArray) / sizeof(sTemperatureArray[0])) - 1; ++i) {
+    for (uint8_t i = 0; i < TEMPERATURE_ARRAY_SIZE - 1; ++i) {
         sTemperatureArray[i] = 0;
     }
 }
@@ -555,7 +558,7 @@ void resetHistory() {
 void readTempAndManageHistory() {
     sTemperatureNewSum = 0;
     sTemperatureOldSum = 0;
-    uint8_t tIndex = (sizeof(sTemperatureArray) / sizeof(sTemperatureArray[0])) - 1;
+    uint8_t tIndex = TEMPERATURE_ARRAY_SIZE - 1;
     /*
      * shift values in temperature history array and insert new one at [0]
      */
@@ -598,10 +601,10 @@ void readTempAndManageHistory() {
  * Check if history is completely filled and if temperature is rising
  */
 bool checkForTemperatureRising() {
-    if (sTemperatureArray[(sizeof(sTemperatureArray) / sizeof(sTemperatureArray[0])) - 1] != 0
+    if (sTemperatureArray[TEMPERATURE_ARRAY_SIZE - 1] != 0
             && sTemperatureNewSum > sTemperatureOldSum + (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT)) {
 #ifdef DEBUG
-        Serial.println(F("Alarm - detected window already closed -> start again"));
+    Serial.println(F("Alarm - detected window already closed -> start again"));
 #endif
         sOpenWindowDetected = false;
         resetHistory();
@@ -617,18 +620,18 @@ bool checkForTemperatureRising() {
  */
 void alarm() {
 
-    // First 120 seconds - just generate alarm tone
+// First 120 seconds - just generate alarm tone
     playAlarmSignalSeconds(120);
-    // after 80 seconds the new (increased) temperature is stable
+// after 80 seconds the new (increased) temperature is stable
 
-    // prepare for new temperature check - reset history
+// prepare for new temperature check - reset history
 #ifdef DEBUG
     Serial.println(F("After 120 seconds prepare for new temperature check -> reset history"));
     Serial.println(F("Play alarm for 480 seconds and check for rising temperature every 30 seconds"));
 #endif
     resetHistory();
 
-    // remaining 480 seconds - check temperature while generating alarm tone
+// remaining 480 seconds - check temperature while generating alarm tone
     for (uint8_t i = 0; i < 16; ++i) {
         readTempAndManageHistory();
         /*

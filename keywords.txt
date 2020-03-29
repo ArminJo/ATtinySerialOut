@@ -29,6 +29,7 @@ writeInt	KEYWORD2
 writeUnsignedInt	KEYWORD2
 writeLong	KEYWORD2
 writeFloat	KEYWORD2
+writeCRLF   KEYWORD2
 
 print	KEYWORD2
 

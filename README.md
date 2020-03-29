@@ -1,5 +1,5 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
-### [Version 1.0.4](https://github.com/ArminJo/ATtinySerialOut/releases)
+### [Version 1.0.5](https://github.com/ArminJo/ATtinySerialOut/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
@@ -47,12 +47,14 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+### Version 1.0.5 - 3/2020
+- Added function `writeCRLF()`
 
 ### Version 1.0.4 - 1/2020
 - Symbol TINY_SERIAL_INHERIT_FROM_PRINT - if defined, you can use this class as a replacement for standard Serial as a print class.
-- improved all ...Hex() functions.
-- define FlashStringHelper for digispark.
-- changed label `loop` to `txloop` in `write1Start8Data1StopNoParity()` for 38400 baud.
+- Improved all ...Hex() functions.
+- Define FlashStringHelper for digispark.
+- Changed label `loop` to `txloop` in `write1Start8Data1StopNoParity()` for 38400 baud.
 
 ### Version 1.0.3
 - OpenWindowAlarm example updated.

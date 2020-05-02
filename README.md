@@ -1,5 +1,5 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
-### [Version 1.0.5](https://github.com/ArminJo/ATtinySerialOut/releases)
+### [Version 1.1.0](https://github.com/ArminJo/ATtinySerialOut/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
@@ -24,10 +24,10 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
     void print(const char* aStringPtr);
     void print(char aChar);
     void print(uint8_t aByte, uint8_t aBase = 10);
-    void print(int aInteger, uint8_t aBase = 10);
-    void print(unsigned int aInteger, uint8_t aBase = 10);
-    void print(long aLong, uint8_t aBase = 10);
-    void print(unsigned long aLong, uint8_t aBase = 10);
+    void print(int16_t, uint8_t aBase = 10);
+    void print(uint16_t aInteger, uint8_t aBase = 10);
+    void print(uint32_t aLong, uint8_t aBase = 10);
+    void print(uint32_t aLong, uint8_t aBase = 10);
     void print(double aFloat, uint8_t aDigits = 2);
 
     void printHex(uint8_t aByte); // with 0x prefix
@@ -35,10 +35,10 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
     void println(const __FlashStringHelper * aStringPtr);
     void println(char aChar);
     void println(uint8_t aByte, uint8_t aBase = 10);
-    void println(int aInteger, uint8_t aBase = 10);
-    void println(unsigned int aInteger, uint8_t aBase = 10);
-    void println(long aLong, uint8_t aBase = 10);
-    void println(unsigned long aLong, uint8_t aBase = 10);
+    void println(int16_t aInteger, uint8_t aBase = 10);
+    void println(uint16_t aInteger, uint8_t aBase = 10);
+    void println(int32_t aLong, uint8_t aBase = 10);
+    void println(uint32_t aLong, uint8_t aBase = 10);
     void println(double aFloat, uint8_t aDigits = 2);
 
     void println(void);
@@ -47,6 +47,10 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+### Version 1.1.0 - 5/2020
+- Changed `int` to `int16_t` and `long` to `int32_t`.
+- Use `utoa()` and `ultoa()` for `uint16_t` and `uint32_t`.
+
 ### Version 1.0.5 - 3/2020
 - Added function `writeCRLF()`
 

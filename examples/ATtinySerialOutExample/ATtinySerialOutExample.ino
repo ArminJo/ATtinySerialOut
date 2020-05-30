@@ -28,17 +28,13 @@
 
 #include <avr/pgmspace.h> // needed for PSTR()
 
-#define VERSION_EXAMPLE "1.0"
-
 void setup(void) {
     initTXPin();
 
-    writeString(F("START " __FILE__ "\nVersion " VERSION_EXAMPLE " from " __DATE__ "\n"));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_ATTINY_SERIAL_OUT));
 
-    uint8_t tOSCCAL = OSCCAL;
-
-    writeString("Value of OSCCAL is:");
-    writeUnsignedByteHexWithPrefix(tOSCCAL);
+    writeString("OSCCAL=");
+    writeUnsignedByteHexWithPrefix(OSCCAL);
 }
 
 void loop(void) {

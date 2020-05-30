@@ -1,5 +1,8 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
+Available as Arduino library "ATtinySerialOut"
+
 ### [Version 1.1.0](https://github.com/ArminJo/ATtinySerialOut/releases)
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
@@ -47,6 +50,8 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+- Removed symbol `TINY_SERIAL_INHERIT_FROM_PRINT` and replaced by macro `#define Print TinySerialOut`
+
 ### Version 1.1.0 - 5/2020
 - Changed `int` to `int16_t` and `long` to `int32_t`.
 - Use `utoa()` and `ultoa()` for `uint16_t` and `uint32_t`.

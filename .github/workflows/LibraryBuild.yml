@@ -16,7 +16,7 @@ on:
     - '**.h'
     - '**LibraryBuild.yml'
   pull_request:
-  
+
 jobs:
   build:
     name: ${{ matrix.arduino-boards-fqbn }} - test compiling examples
@@ -41,7 +41,6 @@ jobs:
           - ATTinyCore:avr:attinyx5:chip=85,clock=1internal
 
         # Specify parameters for each board.
-        # Parameters can be: examples-exclude and examples-build-properties
         #############################################################################################################
         include:
           - arduino-boards-fqbn: digistump:avr:digispark-tiny1  # ATtiny85 board @1 MHz

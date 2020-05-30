@@ -50,9 +50,9 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
-- Removed symbol `TINY_SERIAL_INHERIT_FROM_PRINT` and replaced by macro `#define Print TinySerialOut`
 
 ### Version 1.1.0 - 5/2020
+- Removed symbol `TINY_SERIAL_INHERIT_FROM_PRINT` and replaced by macro `#define Print TinySerialOut`
 - Changed `int` to `int16_t` and `long` to `int32_t`.
 - Use `utoa()` and `ultoa()` for `uint16_t` and `uint32_t`.
 

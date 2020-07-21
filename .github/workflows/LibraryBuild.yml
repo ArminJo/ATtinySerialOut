@@ -36,14 +36,14 @@ jobs:
         # You may add a suffix behind the fqbn with "|" to specify one board for e.g. different compile options like arduino:avr:uno|trace
         #############################################################################################################
         arduino-boards-fqbn:
-          - digistump:avr:digispark-tiny1
+          - digistump:avr:digispark-tiny:clock=clock1
           - digistump:avr:digispark-pro
           - ATTinyCore:avr:attinyx5:chip=85,clock=1internal
 
         # Specify parameters for each board.
         #############################################################################################################
         include:
-          - arduino-boards-fqbn: digistump:avr:digispark-tiny1  # ATtiny85 board @1 MHz
+          - arduino-boards-fqbn: digistump:avr:digispark-tiny:clock=clock1  # ATtiny85 board @1 MHz
             platform-url: https://raw.githubusercontent.com/ArminJo/DigistumpArduino/master/package_digistump_index.json
 
           - arduino-boards-fqbn: digistump:avr:digispark-pro  # ATtiny167 board @16 MHz

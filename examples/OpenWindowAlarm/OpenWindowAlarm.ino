@@ -216,8 +216,13 @@ void setup() {
     /*
      * store MCUSR early for later use
      */
-    sMCUSRStored = MCUSR;
-    MCUSR = 0; // Must be set to 0 to  prepare for next reset or power on
+    if (MCUSR != 0) {
+        sMCUSRStored = MCUSR; // content of MCUSR register at startup
+        MCUSR = 0; // to prepare for next boot.
+    } else {
+        sMCUSRStored = GPIOR0; // Micronucleus puts a copy here if bootloader is in ENTRY_EXT_RESET mode
+        GPIOR0 = 0; // Clear it to detect a jmp 0
+    }
 
 #ifdef DEBUG
     /*
@@ -236,7 +241,7 @@ void setup() {
     pinMode(ALARM_TEST_PIN, INPUT_PULLUP);
 #endif
 
-    changeDigisparkClock();
+//    changeDigisparkClock();
 
     sBODLevelIsBelow2_7 = (getBODLevelFuses() >= 6);
 

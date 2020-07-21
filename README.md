@@ -1,7 +1,7 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
 Available as Arduino library "ATtinySerialOut"
 
-### [Version 1.1.0](https://github.com/ArminJo/ATtinySerialOut/releases)
+### [Version 1.2.0](https://github.com/ArminJo/ATtinySerialOut/releases)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
@@ -13,10 +13,16 @@ Minimal bit-bang send serial
 
 115200 baud for 1/8/16 MHz ATtiny clock.
 ### Perfect for debugging purposes.
-### Provides Serial.print / println functions for easy software porting. 
-### Code size is only 76 Bytes@38400 baud or 196 Bytes@115200 baud (including first call)
+### Provides Serial.print / println functions for easy software porting.
+### Code size is only 76 Bytes@38400 baud or 196 Bytes@115200 baud (including first call).
+### Provides additional fast printHex() and printlnHex() functions.
 ### Default TX pin is PB2 on a ATtiny85.
 To change the output pin, just modify the line "#define TX_PIN ..." in `TinySerialOut.h`. You will find the file in the Arduino IDE under *Sketch/Show Sketch Folder (Ctrl+K)* and then in the `libraries/TinySerialOut/src` directory. Or define global symbol with `-DTX_PIN PB1` which is not yet possible in Arduino IDE:-(.<br/>
+
+# Compile flags
+### TINY_SERIAL_DO_NOT_USE_115200BAUD
+Define this to force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**.
+
 ## Consider to use [Sloeber](http://eclipse.baeyens.it/stable.php?OS=Windows) as IDE<br/>
 If you are using Sloeber as your IDE, you can easily define global symbols at *Properties/Arduino/CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
@@ -50,6 +56,9 @@ If you are using Sloeber as your IDE, you can easily define global symbols at *P
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+
+### Version 1.2.0 - 7/2020
+- Removed workaround `#define __FlashStringHelper fstr_t` for old Digispark core < 1.6.8 in order to work with core >= 1.7.0.
 
 ### Version 1.1.0 - 5/2020
 - Removed symbol `TINY_SERIAL_INHERIT_FROM_PRINT` and replaced by macro `#define Print TinySerialOut`

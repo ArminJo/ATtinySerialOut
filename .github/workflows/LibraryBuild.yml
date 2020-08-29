@@ -48,7 +48,7 @@ jobs:
 
           - arduino-boards-fqbn: digistump:avr:digispark-pro  # ATtiny167 board @16 MHz
             platform-url: https://raw.githubusercontent.com/ArminJo/DigistumpArduino/master/package_digistump_index.json
-            examples-exclude: OpenWindowAlarm # Comma separated list of (unique substrings of) example names to exclude in build
+            sketches-exclude: OpenWindowAlarm # Comma separated list of (unique substrings of) example names to exclude in build
 
           - arduino-boards-fqbn: ATTinyCore:avr:attinyx5:chip=85,clock=1internal
             platform-url: http://drazzy.com/package_drazzy.com_index.json
@@ -65,4 +65,4 @@ jobs:
         with:
           arduino-board-fqbn: ${{ matrix.arduino-boards-fqbn }}
           platform-url: ${{ matrix.platform-url }}
-          examples-exclude: ${{ matrix.examples-exclude }}
+          sketches-exclude: ${{ matrix.sketches-exclude }}

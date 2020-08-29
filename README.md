@@ -59,6 +59,8 @@ This example issues an alarm if the chip sensor detect a falling teperarure and 
 
 ### Version 1.2.0 - 7/2020
 - Removed workaround `#define __FlashStringHelper fstr_t` for old Digispark core < 1.6.8 in order to work with core >= 1.7.0.
+- ATtiny167 support.
+- Moved functions from h to cpp file.
 
 ### Version 1.1.0 - 5/2020
 - Removed symbol `TINY_SERIAL_INHERIT_FROM_PRINT` and replaced by macro `#define Print TinySerialOut`

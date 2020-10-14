@@ -17,14 +17,23 @@ Minimal bit-bang send serial
 ### Code size is only 76 Bytes@38400 baud or 196 Bytes@115200 baud (including first call).
 ### Provides additional fast printHex() and printlnHex() functions.
 ### Default TX pin is PB2 on a ATtiny85.
-To change the output pin, just modify the line "#define TX_PIN ..." in `TinySerialOut.h`. You will find the file in the Arduino IDE under *Sketch/Show Sketch Folder (Ctrl+K)* and then in the `libraries/TinySerialOut/src` directory. Or define global symbol with `-DTX_PIN PB1` which is not yet possible in Arduino IDE:-(.<br/>
 
-# Compile flags
-### TINY_SERIAL_DO_NOT_USE_115200BAUD
-Define this to force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**.
+# Compile options / macros for this library
+To customize the library to different requirements, there are some compile options / makros available.<br/>
+Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for gobal compile (the latter is not possible with the Arduino IDE, so consider to use [Sloeber](https://eclipse.baeyens.it).
+| Macro | Default | File | Description |
+|-|-|-|-|
+| `TX_PIN` | PB2 | TinySerialOut.h | Support loop and style.<br/>Even without `SUPPORT_RTX_EXTENSIONS` the default style is natural (Tone length = note length - 1/16).<br/>Requires around 182 additional bytes FLASH. |
+| `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | TinySerialOut.h | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
 
-## Consider to use [Sloeber](http://eclipse.baeyens.it/stable.php?OS=Windows) as IDE<br/>
-If you are using Sloeber as your IDE, you can easily define global symbols at *Properties/Arduino/CompileOptions*.<br/>
+### Modifying library properties with Arduino IDE
+First use *Sketch/Show Sketch Folder (Ctrl+K)*.<br/>
+If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
+Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
+In both cases the library files itself are located in the `src` directory.<br/>
+
+### Modifying library properties with Sloeber IDE
+If you are using Sloeber as your IDE, you can easily define global symbols with *Properties/Arduino/CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 ## Serial functions provided (linefeed is \n instead of \r\n):

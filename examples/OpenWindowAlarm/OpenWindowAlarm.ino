@@ -176,12 +176,12 @@ uint16_t sVCCMonitoringDelayCounter; // Counter for VCC monitoring.
 #define SHIFT_VALUE_FOR_REFERENCE REFS0
 
 #if (LED_PIN == TX_PIN)
-#error "LED pin must not be equal TX pin."
+#error LED pin must not be equal TX pin.
 #endif
 
 #define LED_PULSE_LENGTH 200 // 500 is well visible, 200 is OK
 #if (LED_PULSE_LENGTH < 150)
-#error "LED_PULSE_LENGTH must at least be 150, since the code after digitalWrite(LED_PIN, 1) needs 150 us."
+#error LED_PULSE_LENGTH must at least be 150, since the code after digitalWrite(LED_PIN, 1) needs 150 us.
 #endif
 
 uint8_t sMCUSRStored; // content of MCUSR register at startup

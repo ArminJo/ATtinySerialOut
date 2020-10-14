@@ -60,7 +60,7 @@
 #define VERSION_ATTINY_SERIAL_OUT_MINOR 2
 
 #if (F_CPU != 1000000) &&  (F_CPU != 8000000) &&  (F_CPU != 16000000)
-#error "F_CPU value must be 1000000, 8000000 or 16000000."
+#error F_CPU value must be 1000000, 8000000 or 16000000.
 #endif
 
 #if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)

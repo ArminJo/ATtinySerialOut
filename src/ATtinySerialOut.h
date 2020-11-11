@@ -104,13 +104,13 @@ void write1Start8Data1StopNoParity(uint8_t aValue);
 void write1Start8Data1StopNoParityWithCliSei(uint8_t aValue);
 void writeValue(uint8_t aValue);
 
-void writeString(const char * aStringPtr);
-void writeString(const __FlashStringHelper * aStringPtr);
-void writeString_P(const char * aStringPtr);
-void writeString_E(const char * aStringPtr);
-void writeStringWithCliSei(const char * aStringPtr);
-void writeStringWithoutCliSei(const char * aStringPtr);
-void writeStringSkipLeadingSpaces(const char * aStringPtr);
+void writeString(const char *aStringPtr);
+void writeString(const __FlashStringHelper *aStringPtr);
+void writeString_P(const char *aStringPtr);
+void writeString_E(const char *aStringPtr);
+void writeStringWithCliSei(const char *aStringPtr);
+void writeStringWithoutCliSei(const char *aStringPtr);
+void writeStringSkipLeadingSpaces(const char *aStringPtr);
 
 void writeBinary(uint8_t aByte); // write direct without decoding
 void writeChar(uint8_t aChar); // Synonym for writeBinary
@@ -143,10 +143,10 @@ public:
 
     // virtual functions of Print class
     size_t write(uint8_t aByte);
-    operator bool(); // To support "while (!Serial); // wait for serial port to connect. Needed for Leonardo only
+    operator bool(); // To support "while (!Serial); // wait for serial port to connect. Required for Leonardo only
 
-    void print(const __FlashStringHelper * aStringPtr);
-    void print(const char* aStringPtr);
+    void print(const __FlashStringHelper *aStringPtr);
+    void print(const char *aStringPtr);
     void print(char aChar);
     void print(uint8_t aByte, uint8_t aBase = 10);
     void print(int16_t aInteger, uint8_t aBase = 10);
@@ -155,8 +155,8 @@ public:
     void print(uint32_t aLong, uint8_t aBase = 10);
     void print(double aFloat, uint8_t aDigits = 2);
 
-    void println(const char* aStringPtr);
-    void println(const __FlashStringHelper * aStringPtr);
+    void println(const char *aStringPtr);
+    void println(const __FlashStringHelper *aStringPtr);
     void println(char aChar);
     void println(uint8_t aByte, uint8_t aBase = 10);
     void println(int16_t aInteger, uint8_t aBase = 10);
@@ -178,6 +178,9 @@ public:
 extern TinySerialOut SerialOut;
 #define Serial SerialOut
 #else
+#  if defined(Serial)
+#undef Serial
+#  endif
 extern TinySerialOut Serial;
 #endif
 #define Print TinySerialOut

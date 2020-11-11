@@ -22,11 +22,20 @@
  *
  */
 
-#include <Arduino.h> // needed for main()
+#include <Arduino.h> // required for main()
+
+/*
+ * You can specify TX_PIN here, but then you must remove ATtinySerialOut.cpp from the library,
+ * otherwise you will see "multiple definition of" errors.
+ */
+//#if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+//#define TX_PIN PA1 // (package pin 2 / TXD on Tiny167) - can use one of PA0 to PA7 here
+//#else
+//#define TX_PIN PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
+//#endif
+//#include "ATtinySerialOut.cpp.h" // comment this out to enable TX_PIN settings
 
 #include "ATtinySerialOut.h"
-
-#include <avr/pgmspace.h> // needed for PSTR()
 
 void setup(void) {
     initTXPin();

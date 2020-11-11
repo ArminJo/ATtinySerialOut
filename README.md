@@ -1,7 +1,7 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
 Available as Arduino library "ATtinySerialOut"
 
-### [Version 1.2.1](https://github.com/ArminJo/ATtinySerialOut/releases)
+### [Version 1.2.2](https://github.com/ArminJo/ATtinySerialOut/releases) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
@@ -23,7 +23,7 @@ To customize the library to different requirements, there are some compile optio
 Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for gobal compile (the latter is not possible with the Arduino IDE, so consider to use [Sloeber](https://eclipse.baeyens.it).
 | Macro | Default | File | Description |
 |-|-|-|-|
-| `TX_PIN` | PB2 | TinySerialOut.h | Support loop and style.<br/>Even without `SUPPORT_RTX_EXTENSIONS` the default style is natural (Tone length = note length - 1/16).<br/>Requires around 182 additional bytes FLASH. |
+| `TX_PIN` | PB2 | TinySerialOut.h | The pin to use for transmitting bit bang serial. If you include ATtinySerialOut.cpp.h and remove ATtinySerialOut.cpp from the library you may specify `TX_PIN` in your main program. See [ATtinySerialOutExample](https://github.com/ArminJo/ATtinySerialOut/examples/ATtinySerialOutExample/ATtinySerialOutExample.ino#L27) |
 | `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | TinySerialOut.h | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
 
 ### Modifying library properties with Arduino IDE
@@ -38,8 +38,8 @@ If you are using Sloeber as your IDE, you can easily define global symbols with 
 
 ## Serial functions provided (linefeed is \n instead of \r\n):
 ```   
-    void print(const __FlashStringHelper * aStringPtr);
-    void print(const char* aStringPtr);
+    void print(const __FlashStringHelper *aStringPtr);
+    void print(const char *aStringPtr);
     void print(char aChar);
     void print(uint8_t aByte, uint8_t aBase = 10);
     void print(int16_t, uint8_t aBase = 10);
@@ -50,7 +50,7 @@ If you are using Sloeber as your IDE, you can easily define global symbols with 
 
     void printHex(uint8_t aByte); // with 0x prefix
 
-    void println(const __FlashStringHelper * aStringPtr);
+    void println(const __FlashStringHelper *aStringPtr);
     void println(char aChar);
     void println(uint8_t aByte, uint8_t aBase = 10);
     void println(int16_t aInteger, uint8_t aBase = 10);
@@ -65,6 +65,9 @@ If you are using Sloeber as your IDE, you can easily define global symbols with 
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
+
+### Version 1.2.2 - 11/2020 - work in progress
+- Cloned ATtinySerialOut.cpp as ATtinySerialOut.cpp.h for direct include.
 
 ### Version 1.2.1 - 10/2020
 - ATtinyX4 support.

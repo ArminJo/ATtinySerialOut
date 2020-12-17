@@ -20,20 +20,20 @@ Minimal bit-bang send serial
 
 # Compile options / macros for this library
 To customize the library to different requirements, there are some compile options / makros available.<br/>
-Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for gobal compile (the latter is not possible with the Arduino IDE, so consider to use [Sloeber](https://eclipse.baeyens.it).
+Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for global compile (the latter is not possible with the Arduino IDE, so consider using [Sloeber](https://eclipse.baeyens.it).
 | Macro | Default | File | Description |
 |-|-|-|-|
 | `TX_PIN` | PB2 | TinySerialOut.h | The pin to use for transmitting bit bang serial. If you include ATtinySerialOut.cpp.h and remove ATtinySerialOut.cpp from the library you may specify `TX_PIN` in your main program. See [ATtinySerialOutExample](https://github.com/ArminJo/ATtinySerialOut/examples/ATtinySerialOutExample/ATtinySerialOutExample.ino#L27) |
 | `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | TinySerialOut.h | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
 
-### Modifying library properties with Arduino IDE
-First use *Sketch/Show Sketch Folder (Ctrl+K)*.<br/>
+### Modifying compile options with Arduino IDE
+First use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
 If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
 Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
 In both cases the library files itself are located in the `src` directory.<br/>
 
-### Modifying library properties with Sloeber IDE
-If you are using Sloeber as your IDE, you can easily define global symbols with *Properties/Arduino/CompileOptions*.<br/>
+### Modifying compile options with Sloeber IDE
+If you are using Sloeber as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 ## Serial functions provided (linefeed is \n instead of \r\n):
@@ -61,6 +61,11 @@ If you are using Sloeber as your IDE, you can easily define global symbols with 
 
     void println(void);
 ```
+
+### Error `call of overloaded 'println(fstr_t*)' is ambiguous`.
+Please use the [new Digistump core](https://github.com/ArminJo/DigistumpArduino#installation). 
+Since version 1.2.0, the library is no longer compatible with the old cores supplied by digistump.
+
 ## [OpenWindowAlarm example](https://raw.githubusercontent.com/ArminJo/ATtinySerialOut/master/examples/OpenWindowAlarm/OpenWindowAlarm.ino)
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 

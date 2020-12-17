@@ -20,7 +20,7 @@
  * At **power-on** the VCC voltage is measured used to **determine the type of battery**  using `VCC_VOLTAGE_LIPO_DETECTION` (3.6 volt).
  * Every `VCC_MONITORING_DELAY_MIN` (60) minutes the battery voltage is measured. Depending on the detected battery type, **low battery voltage** is indicated by **beeping and flashing the LED every 24 seconds**.
  Only the beep (not the flash) is significantly longer than the beep for an open window detection.<br/>
- Low battery voltage is defined by `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_LIPO` (3550 Millivolt) or `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD` (2350 Millivolt).
+ Low battery voltage is defined by `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_LIPO` (3550 millivolt) or `VCC_VOLTAGE_LOWER_LIMIT_MILLIVOLT_STANDARD` (2350 Millivolt).
  * After power-on, the **inactive settling time** is 5 minutes. If the board is getting colder during the settling time, 4:15 (or 8:30) minutes are added to avoid false alarms after power-on.
 
  * If you enable `DEBUG` by commenting out line 60, you can monitor the serial output with 115200 baud at P2 to see what is happening.
@@ -70,10 +70,10 @@
 #include "ATtinySerialOut.h"
 #endif
 
-#include <avr/boot.h>  // needed for boot_signature_byte_get()
-#include <avr/power.h> // needed for clock_prescale_set()
-#include <avr/sleep.h> // needed for sleep_enable()
-#include <avr/wdt.h>   // needed for WDTO_8S
+#include <avr/boot.h>  // required for boot_signature_byte_get()
+#include <avr/power.h> // required for clock_prescale_set()
+#include <avr/sleep.h> // required for sleep_enable()
+#include <avr/wdt.h>   // required for WDTO_8S
 
 #define VERSION "1.3.1"
 /*
@@ -97,7 +97,7 @@
 #define ALARM_TEST_PIN PB0
 #endif
 
-const uint8_t OPEN_WINDOW_ALARM_DELAY_MINUTES = 5; // Wait time between window open detection and activation of alarm
+#define OPEN_WINDOW_ALARM_DELAY_MINUTES  5 // Wait time between window open detection and activation of alarm
 const int OPEN_WINDOW_ALARM_FREQUENCY_HIGH = 2200; // Should be the resonance frequency of speaker/buzzer
 const int OPEN_WINDOW_ALARM_FREQUENCY_LOW = 1100;
 const int OPEN_WINDOW_ALARM_FREQUENCY_VCC_TOO_LOW = 1600; // Use a different frequency to distinguish the this alert from others
@@ -197,7 +197,6 @@ void sleepDelay(uint16_t aSecondsToSleep);
 void delayMilliseconds(unsigned int aMillis);
 uint16_t readADCChannelWithReferenceOversample(uint8_t aChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
 uint16_t getVCCVoltageMillivolt(void);
-void changeDigisparkClock();
 
 #ifdef DEBUG
 void printFuses(void);
@@ -212,7 +211,6 @@ void printBODSFlagExistence();
  ***********************************************************************************/
 
 void setup() {
-
     /*
      * store MCUSR early for later use
      */
@@ -241,12 +239,10 @@ void setup() {
     pinMode(ALARM_TEST_PIN, INPUT_PULLUP);
 #endif
 
-//    changeDigisparkClock();
-
     sBODLevelIsBelow2_7 = (getBODLevelFuses() >= 6);
 
 #ifdef DEBUG
-    Serial.println(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\nAlarm delay = ") STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes");
+    Serial.println(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\nAlarm delay = " STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes"));
 
     Serial.print(F("Brown Out Detection is "));
     if (getBODLevelFuses() == 7) {
@@ -305,6 +301,7 @@ void setup() {
     /*
      * Blink LED at startup to show OPEN_WINDOW_MINUTES
      */
+    delayMilliseconds(1000); // wait extra second after bootloader blink
     for (int i = 0; i < OPEN_WINDOW_ALARM_DELAY_MINUTES; ++i) {
         // activate LED
         digitalWrite(LED_PIN, 1);
@@ -345,6 +342,7 @@ void setup() {
 
     /*
      * wait 8 seconds, since ATtinys temperature is increased after the micronucleus boot process
+     * We do not disable ADC here, so we consume 212 uA
      */
     sleep_cpu()
     ;
@@ -393,7 +391,7 @@ void loop() {
             // tTemperatureOldSum can be 0 -> do not use tTemperatureNewSum < tTemperatureOldSum - (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT)
             if (sTemperatureNewSum + (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT) < sTemperatureOldSum) {
 #ifdef DEBUG
-                Serial.println(F("Detected window just opened -> check again in ") STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes");
+                Serial.println(F("Detected window just opened -> check again in " STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes"));
 #endif
                 sTemperatureMinimumAfterWindowOpen = sTemperatureNewSum;
                 sTemperatureAtWindowOpen = sTemperatureNewSum;
@@ -459,49 +457,6 @@ void loop() {
     digitalWrite(LED_PIN, 0);
 
     sleepDelay(TEMPERATURE_SAMPLE_SECONDS);
-}
-
-/*
- * Code to change Digispark Bootloader clock settings to get the right CPU frequency
- * and to reset Digispark OCCAL tweak.
- * Call it if you want to use the standard ATtiny85 library, BUT do not call it, if you need Digispark USB functions available for 16 MHz.
- */
-void changeDigisparkClock() {
-    uint8_t tLowFuse = boot_lock_fuse_bits_get(GET_LOW_FUSE_BITS);
-    if ((tLowFuse & 0x0F) == 0x01) {
-        /*
-         * Here we have High Frequency PLL Clock (16 or 16.5 MHz)
-         */
-#if (F_CPU == 1000000)
-        // Divide 16 MHz Pll clock by 16 for Digispark Boards to get the requested 1 MHz
-        clock_prescale_set(clock_div_16);
-//        CLKPR = (1 << CLKPCE);  // unlock function
-//        CLKPR = (1 << CLKPS2); // %16
-#endif
-#if (F_CPU == 8000000)
-        // Divide 16 MHz Pll clock by 2 for Digispark Boards to get the requested 8 MHz
-        clock_prescale_set(clock_div_2);
-//        CLKPR = (1 << CLKPCE);  // unlock function
-//        CLKPR = (1 << CLKPS0);// %2
-#endif
-    }
-
-    /*
-     * Code to reset Digispark OCCAL tweak
-     */
-#define  SIGRD  5 // needed for boot_signature_byte_get()
-    uint8_t tStoredOSCCAL = boot_signature_byte_get(1);
-    if (OSCCAL != tStoredOSCCAL) {
-#ifdef DEBUG
-        uint8_t tOSCCAL = OSCCAL;
-        Serial.print(F("Changed OSCCAL from 0x"));
-        Serial.print(tOSCCAL);
-        Serial.print(F(" to 0x"));
-        Serial.println(tStoredOSCCAL);
-#endif
-        // retrieve the factory-stored oscillator calibration bytes to revert the digispark OSCCAL tweak
-        OSCCAL = tStoredOSCCAL;
-    }
 }
 
 /*
@@ -707,7 +662,7 @@ void delayAndSignalOpenWindowDetectionAndLowVCC() {
  * If BOD is enabled by fuses -which is default for Digispark boards- we need additionally 20 uA resulting in 26 uA current.
  */
 void sleepDelay(uint16_t aSecondsToSleep) {
-    ADCSRA = 0; // disable ADC -> saves 150 - 200 uA
+    ADCSRA = 0; // disable ADC -> saves 200 uA
     for (uint16_t i = 0; i < (aSecondsToSleep / 8); ++i) {
         /*
          * Turn off the brown-out detector - but this works only for ATtiny85 revision C, which is hardly seen in the wild :-(.

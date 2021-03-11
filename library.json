@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/ArminJo/ATtinySerialOut"
   },
-  "version": "1.2.1",
+  "version": "1.2.2",
   "exclude": "pictures",
   "authors": {
     "name": "Armin Joachimsmeyer",

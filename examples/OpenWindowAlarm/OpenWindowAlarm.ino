@@ -218,7 +218,7 @@ void setup() {
         sMCUSRStored = MCUSR; // content of MCUSR register at startup
         MCUSR = 0; // to prepare for next boot.
     } else {
-        sMCUSRStored = GPIOR0; // Micronucleus puts a copy here if bootloader is in ENTRY_EXT_RESET mode
+        sMCUSRStored = GPIOR0; // Micronucleus puts a copy here
         GPIOR0 = 0; // Clear it to detect a jmp 0
     }
 

@@ -33,7 +33,7 @@
 //#else
 //#define TX_PIN PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
 //#endif
-//#include "ATtinySerialOut.cpp.h" // comment this out to enable TX_PIN settings
+//#include "ATtinySerialOut.cpp.h" // activate this to enable TX_PIN settings
 
 #include "ATtinySerialOut.h"
 

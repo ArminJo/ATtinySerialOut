@@ -659,7 +659,7 @@ void delayAndSignalOpenWindowDetectionAndLowVCC() {
 /*
  * In Power Down sleep mode we have the watchdog running and ADC disabled, but powered.
  * This needs 5.6 uA.
- * If BOD is enabled by fuses -which is default for Digispark boards- we need additionally 20 uA resulting in 26 uA current.
+ * If BOD is enabled by fuses, we need additionally 20 uA resulting in 26 uA current.
  */
 void sleepDelay(uint16_t aSecondsToSleep) {
     ADCSRA = 0; // disable ADC -> saves 200 uA

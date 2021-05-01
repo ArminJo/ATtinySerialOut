@@ -200,7 +200,7 @@ public:
 // #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
 #if (!defined(UBRRH) && !defined(UBRR0H)) /*AttinyDigisparkCore and AttinyDigisparkCore condition*/ \
     || USE_SOFTWARE_SERIAL /*AttinyDigisparkCore condition*/\
-    || ((defined(UBRRH) || defined(UBRR0H) || defined(UBRR1H) || defined(LINBRRH)) && !USE_SOFTWARE_SERIAL)/*AttinyDigisparkCore condition for HardwareSerial*/
+    || ((defined(UBRRH) || defined(UBRR0H) || defined(UBRR1H) || (defined(LINBRRH)) && !USE_SOFTWARE_SERIAL))/*AttinyDigisparkCore condition for HardwareSerial*/
 // Switch to SerialOut since Serial is already defined
 // or activate line 745 in TinyDebugSerial.h included in AttinyDigisparkCores/src/tiny/WProgram.h at line 24 for AttinyDigisparkCores
 extern TinySerialOut SerialOut;

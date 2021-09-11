@@ -1,5 +1,5 @@
 /*
- * ATtinySerialOut.cpp
+ * ATtinySerialOut.hpp
  *
  * For transmitting debug data over bit bang serial with 115200 baud for 1/8/16 MHz ATtiny clock.
  * For 1 MHz you can choose also 38400 baud (120 bytes smaller code size).
@@ -7,12 +7,13 @@
  * 1 Start, 8 Data, 1 Stop, No Parity
  *
  * Using PB2 // (Pin7 on Tiny85) as default TX pin to be compatible with digispark board
- * To change the output pin, modify the line "#define TX_PIN ..." in TinySerialOut.h or or set it as compiler symbol like "-DTX_PIN PB1".
+ * To change the output pin, add a line "#define TX_PIN ..." before the line #include "TinySerialOut.hpp"
+ * or or set it as compiler symbol like "-DTX_PIN PB1".
  *
  * Using the Serial.print commands needs 4 bytes extra for each call.
  *
  *
- *  Copyright (C) 2015-2020  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2021  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.
@@ -501,13 +502,19 @@ TinySerialOut Serial;
  * Basic serial output function
  *******************************/
 
-inline void delay4CyclesInlineExact(uint16_t a4Microseconds) {
-    /*
-     * The loop takes 4 cycles (4 microseconds  at 1 MHz). Last loop is only 3 cycles. Setting of loop counter a4Microseconds needs 2 cycles
-     * 3 -> 13 cycles (3*4 -1 + 2) = 3*4 + 1
-     * 4 -> 17 cycles
-     * 5 -> 21 cycles
-     */
+/*
+ * Formula is only valid for constant values
+ * Loading of constant value adds 2 extra cycles (check .lss file for exact timing)
+ *
+ * The loop takes 4 cycles (4 microseconds  at 1 MHz). Last loop is only 3 cycles.
+ * 1 -> 3(+2) cycles
+ * 2 -> 7(+2) cycles
+ * 3 -> 11(+2) cycles
+ * 4 -> 15(+2) cycles
+ * 5 -> 19(+2) cycles
+ * 6 -> 23(+2) cycles
+ */
+inline void delay4CyclesExact(uint16_t a4Microseconds) {
     asm volatile (
             "1: sbiw %0,1" "\n\t" // 2 cycles
             "brne .-4" : "=w" (a4Microseconds) : "0" (a4Microseconds)// 2 cycles
@@ -694,22 +701,22 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "cbi  %[txport] , %[txpin]" "\n\t" // 2    PORTB &= ~(1 << TX_PIN);
 #if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
             // 0 cycles padding to get additional 4 cycles
-            //delay4CyclesInlineExact(5); -> 20 cycles
+            //delay4CyclesExact(5); -> 20 cycles
             "ldi  r30 , 0x05" "\n\t"// 1
 #elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // 3 cycles padding to get additional 7 cycles
             "nop" "\n\t"// 1    _nop"();
             "nop" "\n\t"// 1    _nop"();
             "nop" "\n\t"// 1    _nop"();
-            //delay4CyclesInlineExact(15); -> 61 cycles
+            //delay4CyclesExact(15); -> 61 cycles
             "ldi  r30 , 0x0F" "\n\t"// 1
 #elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
             // 0 cycles padding to get additional 4 cycles
-            //delay4CyclesInlineExact(7); -> 29 cycles
+            //delay4CyclesExact(7); -> 29 cycles
             "ldi  r30 , 0x07" "\n\t"// 1
 #elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
             // 0 cycles padding to get additional 4 cycles
-            //delay4CyclesInlineExact(33); -> 133 cycles
+            //delay4CyclesExact(33); -> 133 cycles
             "ldi  r30 , 0x21" "\n\t"// 1
 #endif
             "ldi  r31 , 0x00" "\n\t"            // 1
@@ -739,22 +746,22 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
-            // delay4CyclesInlineExact(3); -> 13 cycles
+            // delay4CyclesExact(3); -> 13 cycles
             "ldi  r30 , 0x03" "\n\t"// 1
 #elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // 3 cycles padding to get additional 11 cycles
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
-            // delay4CyclesInlineExact(14); -> 57 cycles
+            // delay4CyclesExact(14); -> 57 cycles
             "ldi r30 , 0x0E" "\n\t"// 1
 #elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
             // 0 cycles padding to get additional 8 cycles
-            // delay4CyclesInlineExact(6); -> 25 cycles
+            // delay4CyclesExact(6); -> 25 cycles
             "ldi r30 , 0x05" "\n\t"// 1
 #elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
             // 0 cycles padding to get additional 8 cycles
-            //delay4CyclesInlineExact(32); -> 129 cycles
+            //delay4CyclesExact(32); -> 129 cycles
             "ldi  r30 , 0x20" "\n\t"// 1
 #endif
             "ldi r31 , 0x00" "\n\t"            // 1
@@ -775,16 +782,16 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
 
 #if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
-            // delay4CyclesInlineExact(4); -> 17 cycles - gives minimum 25 cycles for stop bit
+            // delay4CyclesExact(4); -> 17 cycles - gives minimum 25 cycles for stop bit
             "ldi  r30 , 0x04" "\n\t"// 1
 #elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
-            // delay4CyclesInlineExact(15) -> 61 cycles - gives minimum 69 cycles for stop bit
+            // delay4CyclesExact(15) -> 61 cycles - gives minimum 69 cycles for stop bit
             "ldi r30 , 0x0F" "\n\t"// 1
 #elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
-            // delay4CyclesInlineExact(5) -> 27 cycles - gives minimum 35 cycles for stop bit
+            // delay4CyclesExact(5) -> 27 cycles - gives minimum 35 cycles for stop bit
             "ldi r30 , 0x05" "\n\t"// 1
 #elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
-            // delay4CyclesInlineExact(32) -> 129 cycles - gives minimum 137 cycles for stop bit
+            // delay4CyclesExact(32) -> 129 cycles - gives minimum 137 cycles for stop bit
             "ldi r30 , 0x20" "\n\t"// 1
 #endif
             "ldi r31 , 0x00" "\n\t"            // 1
@@ -821,7 +828,7 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
 // start bit
     TX_PORT &= ~(1 << TX_PIN);
     _NOP();
-    delay4CyclesInlineExact(4);
+    delay4CyclesExact(4);
 
 // 8 data bits
     uint8_t i = 8;
@@ -843,7 +850,7 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
         _NOP();
         _NOP();
         _NOP();
-        delay4CyclesInlineExact(3);
+        delay4CyclesExact(3);
         --i;
     } while (i > 0);
 
@@ -856,7 +863,7 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
 // Stop bit
     TX_PORT |= 1 << TX_PIN;
 // -8 cycles to compensate for fastest repeated call (1 ret + 1 load + 1 call)
-    delay4CyclesInlineExact(4); // gives minimum 25 cycles for stop bit :-)
+    delay4CyclesExact(4); // gives minimum 25 cycles for stop bit :-)
 }
 #elif defined(ARDUINO_ARCH_APOLLO3)
     void AttinySerialOutDummyToAvoidBFDAssertions(){

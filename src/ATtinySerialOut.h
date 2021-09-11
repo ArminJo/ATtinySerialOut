@@ -1,7 +1,7 @@
 /*
  * ATtinySerialOut.h
  *
- *  Copyright (C) 2015-2020  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2021  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.
@@ -79,26 +79,22 @@
     || defined(__AVR_ATtiny88__)
 #include <Arduino.h>
 
-#define VERSION_ATTINY_SERIAL_OUT "1.2.2"
-#define VERSION_ATTINY_SERIAL_OUT_MAJOR 1
-#define VERSION_ATTINY_SERIAL_OUT_MINOR 2
+#define VERSION_ATTINY_SERIAL_OUT "2.0.0"
+#define VERSION_ATTINY_SERIAL_OUT_MAJOR 2
+#define VERSION_ATTINY_SERIAL_OUT_MINOR 0
 
 #if (F_CPU != 1000000) &&  (F_CPU != 8000000) &&  (F_CPU != 16000000)
 #error F_CPU value must be 1000000, 8000000 or 16000000.
 #endif
 
-#if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) // Digispark PRO board
-#  ifndef TX_PIN
+#if !defined(TX_PIN)
+#  if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) // Digispark PRO board
 #define TX_PIN PA1 // (package pin 2 / TXD on Tiny167) - can use one of PA0 to PA7 here
-#  endif
 
-#elif defined(__AVR_ATtiny88__) //  MH-ET LIVE Tiny88(16.0MHz) board
-#  ifndef TX_PIN
+#  elif defined(__AVR_ATtiny88__) //  MH-ET LIVE Tiny88(16.0MHz) board
 #define TX_PIN PD6 // (board pin 6) - can use one of PD3 to PD7 here
-#  endif
 
-#else // Tiny X4 + X5 Digispark board
-#  ifndef TX_PIN
+#  else // Tiny X4 + X5 Digispark board
 #define TX_PIN PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
 #  endif
 #endif
@@ -114,7 +110,7 @@
  * @8/16 MHz use 115200 baud instead of 230400 baud.
  */
 //#define TINY_SERIAL_DO_NOT_USE_115200BAUD
-#ifndef TINY_SERIAL_DO_NOT_USE_115200BAUD  // define this to force using other baud rates
+#if !defined(TINY_SERIAL_DO_NOT_USE_115200BAUD)  // define this to force using other baud rates
 #define USE_115200BAUD
 #endif
 

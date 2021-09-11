@@ -67,7 +67,7 @@
 #define DEBUG
 #endif
 #ifdef DEBUG
-#include "ATtinySerialOut.h"
+#include "ATtinySerialOut.hpp"
 #endif
 
 #include <avr/boot.h>  // required for boot_signature_byte_get()

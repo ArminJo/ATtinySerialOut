@@ -1,7 +1,7 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
 Available as Arduino library "ATtinySerialOut"
 
-### [Version 1.2.3](https://github.com/ArminJo/ATtinySerialOut/archive/master.zip) - work in progress
+### [Version 2.0.1](https://github.com/ArminJo/ATtinySerialOut/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
@@ -18,13 +18,24 @@ Minimal bit-bang send serial
 ### Provides additional fast printHex() and printlnHex() functions.
 ### Default TX pin is PB2 on a ATtiny85.
 
+# Version 2
+From this version, ATtinySerialOut.cpp is renamed to ATtinySerialOut.hpp. You should include it once in your main program (ino file) like done in the examples.
+I you accidently included it more than once change you will see errors like this:
+
+```
+(.text+0x0): multiple definition of `initTXPin()'
+.\ShowInfo.cpp.o (symbol from plugin):(.text+0x0): first defined here
+```
+
+To fix the error, you must rename the include directive in the file mentioned in the error (here: ShowInfo.cpp) from `#include "ATtinySerialOut.hpp"` to `#include "ATtinySerialOut.h"`.
+
 # Compile options / macros for this library
 To customize the library to different requirements, there are some compile options / makros available.<br/>
 Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for global compile (the latter is not possible with the Arduino IDE, so consider using [Sloeber](https://eclipse.baeyens.it).
 | Macro | Default | File | Description |
 |-|-|-|-|
-| `TX_PIN` | PB2 | TinySerialOut.h | The pin to use for transmitting bit bang serial. If you include ATtinySerialOut.cpp.h and remove ATtinySerialOut.cpp from the library you may specify `TX_PIN` in your main program. See [ATtinySerialOutExample](https://github.com/ArminJo/ATtinySerialOut/examples/ATtinySerialOutExample/ATtinySerialOutExample.ino#L27) |
-| `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | TinySerialOut.h | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
+| `TX_PIN` | PB2 | Before `#include <TinySerialOut.hpp>` | The pin to use for transmitting bit bang serial. |
+| `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | Before `#include <TinySerialOut.hpp>` | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
 
 ### Modifying compile options with Arduino IDE
 First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
@@ -70,10 +81,13 @@ Since version 1.2.0, the library is no longer compatible with the old cores supp
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
-### Version 1.2.3 - 03/2021 - work in progress
+### Version 2.0.1 - work in progress
+
+### Version 2.0.0 - 09/2021
+Renamed ATtinySerialOut.cpp to ATtinySerialOut.hpp => TX pin can be defined in main program.
 
 ### Version 1.2.2 - 03/2021
-- Cloned ATtinySerialOut.cpp as ATtinySerialOut.cpp.h for direct include.
+- Cloned ATtinySerialOut.cpp as ATtinySerialOut.hpp for direct include.
 - Added ATtiny88 support.
 
 ### Version 1.2.1 - 10/2020

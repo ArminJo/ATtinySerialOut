@@ -378,6 +378,7 @@ size_t TinySerialOut::write(uint8_t aByte) {
     writeBinary(aByte);
     return 1;
 }
+#if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
 
 void TinySerialOut::print(const char *aStringPtr) {
     writeString(aStringPtr);
@@ -483,6 +484,7 @@ void TinySerialOut::println() {
     print('\r');
     print('\n');
 }
+#endif // !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
 
 /*
  * The Serial Instance!!!

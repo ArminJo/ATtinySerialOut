@@ -152,7 +152,11 @@ void writeFloat(double aFloat, uint8_t aDigits);
 
 char nibbleToHex(uint8_t aByte);
 
+#if defined(TINY_SERIAL_INHERIT_FROM_PRINT)
+class TinySerialOut: public Print
+#else
 class TinySerialOut
+#endif
 {
 public:
 
@@ -169,6 +173,7 @@ public:
     size_t write(uint8_t aByte);
     operator bool(); // To support "while (!Serial); // wait for serial port to connect. Required for Leonardo only
 
+#if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
     void print(const __FlashStringHelper *aStringPtr);
     void print(const char *aStringPtr);
     void print(char aChar);
@@ -190,6 +195,7 @@ public:
     void println(double aFloat, uint8_t aDigits = 2);
 
     void println(void);
+#endif // TINY_SERIAL_INHERIT_FROM_PRINT
 
 };
 
@@ -207,7 +213,9 @@ extern TinySerialOut SerialOut;
 #  endif
 extern TinySerialOut Serial;
 #endif
+#if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
 #define Print TinySerialOut
+#endif
 
 #endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 

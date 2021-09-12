@@ -19,8 +19,8 @@ Minimal bit-bang send serial
 ### Default TX pin is PB2 on a ATtiny85.
 
 # Version 2
-From this version, ATtinySerialOut.cpp is renamed to ATtinySerialOut.hpp. You should include it once in your main program (ino file) like done in the examples.
-I you accidently included it more than once change you will see errors like this:
+From this version, ATtinySerialOut.cpp is renamed to ATtinySerialOut.hpp. You should include it once in your main program (.ino file) like done in the examples.
+I you accidently included it more than once, you will see errors like this:
 
 ```
 (.text+0x0): multiple definition of `initTXPin()'
@@ -36,6 +36,8 @@ Modify it by commenting them out or in, or change the values if applicable. Or d
 |-|-|-|-|
 | `TX_PIN` | PB2 | Before `#include <TinySerialOut.hpp>` | The pin to use for transmitting bit bang serial. |
 | `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | Before `#include <TinySerialOut.hpp>` | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
+| `TINY_SERIAL_INHERIT_FROM_PRINT` | disabled | Before `#include <TinySerialOut.hpp>` | If defined, you can use this class as a replacement for standard Serial as a print class e.g.  for functions like void `prinInfo(Print *aSerial)`. Increases program size. |
+
 
 ### Modifying compile options with Arduino IDE
 First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
@@ -84,7 +86,8 @@ This example issues an alarm if the chip sensor detect a falling teperarure and 
 ### Version 2.0.1 - work in progress
 
 ### Version 2.0.0 - 09/2021
-Renamed ATtinySerialOut.cpp to ATtinySerialOut.hpp => TX pin can be defined in main program.
+- Renamed ATtinySerialOut.cpp to ATtinySerialOut.hpp => TX pin can be defined in main program.
+- Added symbol `TINY_SERIAL_INHERIT_FROM_PRINT` - if defined, you can use this class as a replacement for standard Serial as a print class.
 
 ### Version 1.2.2 - 03/2021
 - Cloned ATtinySerialOut.cpp as ATtinySerialOut.hpp for direct include.

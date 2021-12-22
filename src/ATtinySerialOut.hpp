@@ -49,14 +49,16 @@
 #endif
 
 #if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#  ifndef TX_PORT
+#  if !defined(TX_PORT)
+#    if !defined(USE_PORTB_FOR_TX_PIN)
 #define TX_PORT PORTA
-#define TX_PORT_ADDR 0x02 // PORTA
+#define TX_PORT_ADDR 0x02 // from #define PORTA _SFR_IO8(0x02)
 #define TX_DDR DDRA
-
-//#define TX_PORT PORTB
-//#define TX_PORT_ADDR 0x05
-//#define TX_DDR DDRB
+#    else
+#define TX_PORT PORTB
+#define TX_PORT_ADDR 0x05 // from #define PORTB _SFR_IO8(0x05)
+#define TX_DDR DDRB
+#    endif
 #  endif
 
 #elif defined(__AVR_ATtiny88__)

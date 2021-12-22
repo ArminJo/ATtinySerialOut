@@ -89,7 +89,8 @@
 
 #if !defined(TX_PIN)
 #  if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) // Digispark PRO board
-#define TX_PIN PA1 // (package pin 2 / TXD on Tiny167) - can use one of PA0 to PA7 here
+#define TX_PIN PA1 // (package pin 2 / TXD on Tiny167) - can use one of PA0 to PA7here
+//#define USE_PORTB_FOR_TX_PIN // must be enabled, if you use one of PB0 to PB7 above
 
 #  elif defined(__AVR_ATtiny88__) //  MH-ET LIVE Tiny88(16.0MHz) board
 #define TX_PIN PD6 // (board pin 6) - can use one of PD3 to PD7 here
@@ -162,7 +163,7 @@ public:
 
     void begin(long);
     void end();
-    void flush(void);
+    void flush(void); // not required -> dummy
 
     void printHex(uint8_t aByte); // with 0x prefix
     void printHex(uint16_t aWord); // with 0x prefix

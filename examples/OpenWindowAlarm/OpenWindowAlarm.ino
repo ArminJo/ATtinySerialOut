@@ -1,5 +1,6 @@
 /*
  * OpenWindowAlarm.cpp
+ * This program must run at 1MHz, select Digispark (1mhz – No USB) or equivalent as your board!
  *
  * Overview:
  * Every 24 seconds a sample is taken of the ATtiny internal temperature sensor which has a resolution of 1 degree.
@@ -33,7 +34,7 @@
  * For the 6 uA scenario, loop current is 500 times and startup time is negligible => loop adds 5% to 12% to total (lower) power consumption.
  *
  *
- *  Copyright (C) 2018-19  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2019  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-OpenWindowAlarm https://github.com/ArminJo/Arduino-OpenWindowAlarm.
@@ -67,7 +68,7 @@
 #define DEBUG
 #endif
 #ifdef DEBUG
-#include "ATtinySerialOut.hpp"
+#include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
 #endif
 
 #include <avr/boot.h>  // required for boot_signature_byte_get()

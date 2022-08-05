@@ -1,7 +1,7 @@
 /*
  * ATtinySerialOut.h
  *
- *  Copyright (C) 2015-2021  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2022  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.
@@ -76,9 +76,18 @@
     || defined(__AVR_ATtiny88__)
 #include <Arduino.h>
 
-#define VERSION_ATTINY_SERIAL_OUT "2.0.0"
+#define VERSION_ATTINY_SERIAL_OUT "2.1.0"
 #define VERSION_ATTINY_SERIAL_OUT_MAJOR 2
-#define VERSION_ATTINY_SERIAL_OUT_MINOR 0
+#define VERSION_ATTINY_SERIAL_OUT_MINOR 1
+#define VERSION_ATTINY_SERIAL_OUT_PATCH 0
+// The change log is at the bottom of the file
+
+/*
+ * Macro to convert 3 version parts into an integer
+ * To be used in preprocessor comparisons, such as #if VERSION_ATTINY_SERIAL_OUT_HEX >= VERSION_HEX_VALUE(3, 0, 0)
+ */
+#define VERSION_HEX_VALUE(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+#define VERSION_ATTINY_SERIAL_OUT_HEX  VERSION_HEX_VALUE(VERSION_ATTINY_SERIAL_OUT_MAJOR, VERSION_ATTINY_SERIAL_OUT_MINOR, VERSION_ATTINY_SERIAL_OUT_PATCH)
 
 #if (F_CPU != 1000000) &&  (F_CPU != 8000000) &&  (F_CPU != 16000000)
 #error F_CPU value must be 1000000, 8000000 or 16000000.

@@ -1,7 +1,7 @@
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
 Available as Arduino library "ATtinySerialOut"
 
-### [Version 2.0.1](https://github.com/ArminJo/ATtinySerialOut/archive/master.zip) - work in progress
+### [Version 2.1.1](https://github.com/ArminJo/ATtinySerialOut/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
@@ -90,8 +90,12 @@ Since version 1.2.0, the library is no longer compatible with the old cores supp
 This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
 
 # Revision History
-### Version 2.0.1 - work in progress
+### Version 2.1.1 - work in progress
+
+### Version 2.1.0 - work in progress
+- Added compile guard.
 - Added `USE_PORTB_FOR_TX_PIN` to allow TX pin on port B for ATtiny87/167.
+- Improved #if guard for instance naming.
 
 ### Version 2.0.0 - 09/2021
 - Renamed ATtinySerialOut.cpp to ATtinySerialOut.hpp => TX pin can be defined in main program.

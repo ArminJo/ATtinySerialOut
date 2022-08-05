@@ -18,7 +18,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -46,14 +46,14 @@ void setup(void) {
 void loop(void) {
     static uint8_t tIndex = 0;
     /*
-     * Example of 3 Byte output. View in combined ASSCI / HEX View in HTerm (http://www.der-hammer.info/terminal/)
+     * Example of 3 byte output. View in combined ASSCI / HEX View in HTerm (http://www.der-hammer.info/terminal/)
      * Otherwise use writeUnsignedByteHexWithoutPrefix or writeUnsignedByteHex
      */
     write1Start8Data1StopNoParityWithCliSei('I');
-    writeBinary(tIndex);                    // 1 Byte binary output
-    writeUnsignedByte(tIndex);              // 1-3 Byte ASCII output
-    writeUnsignedByteHexWithPrefix(tIndex); // 4 Byte output
-    writeUnsignedByteHex(tIndex);           // 2 Byte output
+    writeBinary(tIndex);                    // 1 byte binary output
+    writeUnsignedByte(tIndex);              // 1-3 byte ASCII output
+    writeUnsignedByteHexWithPrefix(tIndex); // 4 byte output
+    writeUnsignedByteHex(tIndex);           // 2 byte output
     write1Start8Data1StopNoParityWithCliSei('\n');
     /*
      * Serial.print usage example

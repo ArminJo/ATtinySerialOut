@@ -29,9 +29,12 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
+
+#ifndef _ATTINY_SERIAL_OUT_HPP
+#define _ATTINY_SERIAL_OUT_HPP
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
     || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
@@ -44,7 +47,7 @@
 #define _NOP()  __asm__ volatile ("nop")
 #endif
 
-#ifndef PORTB
+#if !defined(PORTB)
 #define PORTB (*(volatile uint8_t *)((0x18) + 0x20))
 #endif
 
@@ -78,6 +81,9 @@ void write1Start8Data1StopNoParity(uint8_t aValue);
 
 bool sUseCliSeiForWrite = true;
 
+/*
+ * Must be called once if pin is not set to output otherwise
+ */
 void initTXPin() {
     // TX_PIN is active LOW, so set it to HIGH initially
     TX_PORT |= (1 << TX_PIN);
@@ -107,13 +113,13 @@ void useCliSeiForStrings(bool aUseCliSeiForWrite) {
  * Write String residing in RAM
  */
 void writeString(const char *aStringPtr) {
-#ifndef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if !defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
     if (sUseCliSeiForWrite) {
 #endif
         while (*aStringPtr != 0) {
             write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
         }
-#ifndef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if !defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
     } else {
         while (*aStringPtr != 0) {
             write1Start8Data1StopNoParity(*aStringPtr++);
@@ -123,13 +129,13 @@ void writeString(const char *aStringPtr) {
 }
 
 /*
- * Write string residing in program space (FLASH)
+ * Write string residing in program memory (FLASH)
  */
 void writeString_P(const char *aStringPtr) {
     uint8_t tChar = pgm_read_byte((const uint8_t * ) aStringPtr);
 // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
-#ifdef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
         write1Start8Data1StopNoParityWithCliSei(tChar);
 #else
         if (sUseCliSeiForWrite) {
@@ -143,14 +149,14 @@ void writeString_P(const char *aStringPtr) {
 }
 
 /*
- * Write string residing in program space (FLASH)
+ * Write string residing in program memory (FLASH)
  */
 void writeString(const __FlashStringHelper *aStringPtr) {
     PGM_P tPGMStringPtr = reinterpret_cast<PGM_P>(aStringPtr);
     uint8_t tChar = pgm_read_byte((const uint8_t * ) aStringPtr);
 // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
-#ifdef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
         write1Start8Data1StopNoParityWithCliSei(tChar);
 #else
         if (sUseCliSeiForWrite) {
@@ -170,7 +176,7 @@ void writeString_E(const char *aStringPtr) {
     uint8_t tChar = eeprom_read_byte((const uint8_t *) aStringPtr);
     // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
-#ifdef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
         write1Start8Data1StopNoParityWithCliSei(tChar);
 #else
         if (sUseCliSeiForWrite) {
@@ -200,13 +206,13 @@ void writeStringSkipLeadingSpaces(const char *aStringPtr) {
     while (*aStringPtr == ' ' && *aStringPtr != 0) {
         aStringPtr++;
     }
-#ifndef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if !defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
     if (sUseCliSeiForWrite) {
 #endif
         while (*aStringPtr != 0) {
             write1Start8Data1StopNoParityWithCliSei(*aStringPtr++);
         }
-#ifndef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if !defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
     } else {
         while (*aStringPtr != 0) {
             write1Start8Data1StopNoParity(*aStringPtr++);
@@ -216,7 +222,7 @@ void writeStringSkipLeadingSpaces(const char *aStringPtr) {
 }
 
 void writeBinary(uint8_t aByte) {
-#ifdef USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
+#if defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
     write1Start8Data1StopNoParityWithCliSei(aByte);
 #else
     if (sUseCliSeiForWrite) {
@@ -243,7 +249,7 @@ void writeUnsignedByte(uint8_t aByte) {
 }
 
 /*
- * 2 Byte Hex output
+ * 2 byte Hex output
  */
 void writeUnsignedByteHex(uint8_t aByte) {
     char tStringBuffer[3];
@@ -261,7 +267,7 @@ void writeUnsignedByteHex(uint8_t aByte) {
 }
 
 /*
- * 2 Byte Hex output with 2 Byte prefix "0x"
+ * 2 byte Hex output with 2 byte prefix "0x"
  */
 void writeUnsignedByteHexWithPrefix(uint8_t aByte) {
     writeBinary('0');
@@ -328,7 +334,7 @@ void writeFloat(double aFloat, uint8_t aDigits) {
  */
 void TinySerialOut::begin(long aBaudrate) {
     initTXPin();
-#if defined(USE_115200BAUD) // else smaller code, but only 38400 baud at 1 MHz
+#if defined(_USE_115200BAUD) // else smaller code, but only 38400 baud at 1 MHz
     if (aBaudrate != 115200) {
         println(F("Only 115200 supported!"));
     }
@@ -354,7 +360,7 @@ void TinySerialOut::flush() {
 }
 
 /*
- * 2 Byte Hex output with 2 Byte prefix "0x"
+ * 2 byte Hex output with 2 byte prefix "0x"
  */
 void TinySerialOut::printHex(uint8_t aByte) {
     writeUnsignedByteHexWithPrefix(aByte);
@@ -525,12 +531,12 @@ inline void delay4CyclesExact(uint16_t a4Microseconds) {
     );
 }
 
-#if (F_CPU == 1000000) && defined(USE_115200BAUD) //else smaller code, but only 38400 baud at 1 MHz
+#if (F_CPU == 1000000) && defined(_USE_115200BAUD) //else smaller code, but only 38400 baud at 1 MHz
 /*
  * 115200 baud - 8,680 cycles per bit, 86,8 per byte at 1 MHz
  *
  *  Assembler code for 115200 baud extracted from Digispark core files:
- *  Code size is 196 Byte (including first call)
+ *  Code size is 196 byte (including first call)
  *
  *   TinySerialOut.h - Tiny write-only software serial.
  *   Copyright 2010 Rowdy Dog Software. This code is part of Arduino-Tiny.
@@ -680,7 +686,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 }
 #else
 /*
- * Small code using loop. Code size is 76 Byte (including first call)
+ * Small code using loop. Code size is 76 byte (including first call)
  *
  * 1 MHz CPU Clock
  *  26,04 cycles per bit, 260,4 per byte for 38400 baud at 1 MHz Clock
@@ -703,22 +709,22 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
     asm volatile
     (
             "cbi  %[txport] , %[txpin]" "\n\t" // 2    PORTB &= ~(1 << TX_PIN);
-#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
+#if (F_CPU == 1000000) && !defined(_USE_115200BAUD) // 1 MHz 38400 baud
             // 0 cycles padding to get additional 4 cycles
             //delay4CyclesExact(5); -> 20 cycles
             "ldi  r30 , 0x05" "\n\t"// 1
-#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
+#elif ((F_CPU == 8000000) && defined(_USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(_USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // 3 cycles padding to get additional 7 cycles
             "nop" "\n\t"// 1    _nop"();
             "nop" "\n\t"// 1    _nop"();
             "nop" "\n\t"// 1    _nop"();
             //delay4CyclesExact(15); -> 61 cycles
             "ldi  r30 , 0x0F" "\n\t"// 1
-#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
+#elif (F_CPU == 8000000) && !defined(_USE_115200BAUD) // 8 MHz 230400 baud
             // 0 cycles padding to get additional 4 cycles
             //delay4CyclesExact(7); -> 29 cycles
             "ldi  r30 , 0x07" "\n\t"// 1
-#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
+#elif (F_CPU == 16000000) && defined(_USE_115200BAUD) // 16 MHz 115200 baud
             // 0 cycles padding to get additional 4 cycles
             //delay4CyclesExact(33); -> 133 cycles
             "ldi  r30 , 0x21" "\n\t"// 1
@@ -745,25 +751,25 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "nop" "\n\t"// 1
             "lsr %[value]" "\n\t"// 1    aValue = aValue >> 1;
 
-#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
+#if (F_CPU == 1000000) && !defined(_USE_115200BAUD) // 1 MHz 38400 baud
             // 3 cycles padding to get additional 11 cycles
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             // delay4CyclesExact(3); -> 13 cycles
             "ldi  r30 , 0x03" "\n\t"// 1
-#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
+#elif ((F_CPU == 8000000) && defined(_USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(_USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // 3 cycles padding to get additional 11 cycles
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             // delay4CyclesExact(14); -> 57 cycles
             "ldi r30 , 0x0E" "\n\t"// 1
-#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
+#elif (F_CPU == 8000000) && !defined(_USE_115200BAUD) // 8 MHz 230400 baud
             // 0 cycles padding to get additional 8 cycles
             // delay4CyclesExact(6); -> 25 cycles
             "ldi r30 , 0x05" "\n\t"// 1
-#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
+#elif (F_CPU == 16000000) && defined(_USE_115200BAUD) // 16 MHz 115200 baud
             // 0 cycles padding to get additional 8 cycles
             //delay4CyclesExact(32); -> 129 cycles
             "ldi  r30 , 0x20" "\n\t"// 1
@@ -785,16 +791,16 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             // Stop bit
             "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
 
-#if (F_CPU == 1000000) && !defined(USE_115200BAUD) // 1 MHz 38400 baud
+#if (F_CPU == 1000000) && !defined(_USE_115200BAUD) // 1 MHz 38400 baud
             // delay4CyclesExact(4); -> 17 cycles - gives minimum 25 cycles for stop bit
             "ldi  r30 , 0x04" "\n\t"// 1
-#elif ((F_CPU == 8000000) && defined(USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
+#elif ((F_CPU == 8000000) && defined(_USE_115200BAUD)) || ((F_CPU == 16000000) && !defined(_USE_115200BAUD)) // 8 MHz 115200 baud OR 16 MHz 230400 baud
             // delay4CyclesExact(15) -> 61 cycles - gives minimum 69 cycles for stop bit
             "ldi r30 , 0x0F" "\n\t"// 1
-#elif (F_CPU == 8000000) && !defined(USE_115200BAUD) // 8 MHz 230400 baud
+#elif (F_CPU == 8000000) && !defined(_USE_115200BAUD) // 8 MHz 230400 baud
             // delay4CyclesExact(5) -> 27 cycles - gives minimum 35 cycles for stop bit
             "ldi r30 , 0x05" "\n\t"// 1
-#elif (F_CPU == 16000000) && defined(USE_115200BAUD) // 16 MHz 115200 baud
+#elif (F_CPU == 16000000) && defined(_USE_115200BAUD) // 16 MHz 115200 baud
             // delay4CyclesExact(32) -> 129 cycles - gives minimum 137 cycles for stop bit
             "ldi r30 , 0x20" "\n\t"// 1
 #endif
@@ -874,3 +880,5 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
         ;
     }
 #endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+
+#endif // _ATTINY_SERIAL_OUT_HPP

@@ -17,7 +17,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -30,7 +30,6 @@
 // USB-   PCINT4/XTAL2/CLKO/ OC1B/ADC2 (4) PB4  3|    |6  PB1 (1) MISO/DO/AIN1/OC0B/ OC1A/PCINT1 - (Digispark) LED
 //                                         GND  4|    |5  PB0 (0) MOSI/DI/AIN0/OC0A/!OC1A/SDA/AREF/PCINT0
 //                                               +----+
-
 // ATMEL ATTINY167
 // Pin numbers are for Digispark core
 // Pin numbers in parenthesis are for ATTinyCore
@@ -48,7 +47,6 @@
 //        5 (7) PA7 10|    |11  PB7 (15) RESET
 //                    +----+
 //
-
 // MH-ET LIVE Tiny88 (16.0MHz) board
 // Digital Pin numbers in parenthesis are for ATTinyCore library
 //                       USB
@@ -69,9 +67,8 @@
 //USB+          PD1   1|      |GND
 //USB-  INT0    PD2   2|      |VIN
 //                     +------+
-
-#ifndef ATTINY_SERIAL_OUT_H_
-#define ATTINY_SERIAL_OUT_H_
+#ifndef _ATTINY_SERIAL_OUT_H
+#define _ATTINY_SERIAL_OUT_H
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
     || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
@@ -105,14 +102,13 @@
  * with 87 micro seconds intervals of disabled interrupts for each sent byte @115200 baud.
  */
 //#define USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT
-
 /*
  * @1 MHz use bigger (+120 bytes for unrolled loop) but faster code. Otherwise only 38400 baud is possible.
  * @8/16 MHz use 115200 baud instead of 230400 baud.
  */
 //#define TINY_SERIAL_DO_NOT_USE_115200BAUD
 #if !defined(TINY_SERIAL_DO_NOT_USE_115200BAUD)  // define this to force using other baud rates
-#define USE_115200BAUD
+#define _USE_115200BAUD // to avoid double negations
 #endif
 
 // The same class definition as for plain arduino
@@ -124,7 +120,7 @@ class __FlashStringHelper;
 extern bool sUseCliSeiForWrite; // default is true
 void useCliSeiForStrings(bool aUseCliSeiForWrite); // might be useful to set to false if output is done from ISR, to avoid to call unwanted sei().
 
-void initTXPin();
+void initTXPin(); // Must be called once if pin is not set to output otherwise
 void write1Start8Data1StopNoParity(uint8_t aValue);
 void write1Start8Data1StopNoParityWithCliSei(uint8_t aValue);
 void writeValue(uint8_t aValue);
@@ -200,13 +196,11 @@ public:
 
 };
 
-// #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
-#if (!defined(UBRRH) && !defined(UBRR0H)) /*AttinyDigisparkCore and AttinyDigisparkCore condition*/ \
-    || USE_SOFTWARE_SERIAL /*AttinyDigisparkCore condition*/\
-    || ((defined(UBRRH) || defined(UBRR0H) || defined(UBRR1H) || (defined(LINBRRH)) && !USE_SOFTWARE_SERIAL))/*AttinyDigisparkCore condition for HardwareSerial*/
-// Switch to SerialOut since Serial is already defined
-// or activate line 745 in TinyDebugSerial.h included in AttinyDigisparkCores/src/tiny/WProgram.h at line 24 for AttinyDigisparkCores
-extern TinySerialOut SerialOut;
+// This if is required to be compatible with ATTinyCores and AttinyDigisparkCores
+#if defined(DEFAULT_TO_TINY_DEBUG_SERIAL) /*AttinyDigisparkCore condition for defining Serial at line 745 in TinyDebugSerial.h*/ \
+    || ((!defined(UBRRH) && !defined(UBRR0H)) || (defined(USE_SOFTWARE_SERIAL) && USE_SOFTWARE_SERIAL)) /*ATTinyCore condition for defining Serial at line 55 in TinySoftwareSerial.h*/\
+    || ((defined(UBRRH) || defined(UBRR0H) || (defined(LINBRRH)) && !USE_SOFTWARE_SERIAL)) /*ATTinyCore condition for for defining Serial at line 71ff in HardwareSerial.h*/
+extern TinySerialOut SerialOut; // Name our instance SerialOut since Serial is already defined
 #define Serial SerialOut
 #else
 #  if defined(Serial)
@@ -214,12 +208,11 @@ extern TinySerialOut SerialOut;
 #  endif
 extern TinySerialOut Serial;
 #endif
+
 #if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
 #define Print TinySerialOut
 #endif
 
 #endif // defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 
-#endif /* ATTINY_SERIAL_OUT_H_ */
-
-#pragma once
+#endif // _ATTINY_SERIAL_OUT_H

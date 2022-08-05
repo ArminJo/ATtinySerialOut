@@ -30,7 +30,7 @@
  * Power consumption is 26 uA at sleep and 2.8 mA at at 1 MHz active.
  * The software loop needs 2.1 ms and with DEBUG 6.5 ms (plus 3 times 1 ms startup time) => active time is around 1/5000 or 1/2500 of total time.
  * During the loop the power consumption is 100 times more than sleep => Loop adds only 2% to 4% to total power consumption.
- * If you reprogram the fuses, you can get 6 µA power consumption.
+ * If you reprogram the fuses, you can get 6 uA power consumption.
  * For the 6 uA scenario, loop current is 500 times and startup time is negligible => loop adds 5% to 12% to total (lower) power consumption.
  *
  *
@@ -50,7 +50,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -64,10 +64,10 @@
 //#define TRACE // To see more serial output at startup with 115200 baud at P2
 #define ALARM_TEST // start alarm immediately if PB0 / P0 is connected to ground
 
-#ifdef TRACE
+#if defined(TRACE)
 #define DEBUG
 #endif
-#ifdef DEBUG
+#if defined(DEBUG)
 #include "ATtinySerialOut.hpp" // Available as Arduino library "ATtinySerialOut"
 #endif
 
@@ -94,7 +94,7 @@
  * - Fixed analog reference bug.
  */
 
-#ifdef ALARM_TEST
+#if defined(ALARM_TEST)
 #define ALARM_TEST_PIN PB0
 #endif
 
@@ -199,7 +199,7 @@ void delayMilliseconds(unsigned int aMillis);
 uint16_t readADCChannelWithReferenceOversample(uint8_t aChannelNumber, uint8_t aReference, uint8_t aOversampleExponent);
 uint16_t getVCCVoltageMillivolt(void);
 
-#ifdef DEBUG
+#if defined(DEBUG)
 void printFuses(void);
 void printBODSFlagExistence();
 #endif
@@ -223,7 +223,7 @@ void setup() {
         GPIOR0 = 0; // Clear it to detect a jmp 0
     }
 
-#ifdef DEBUG
+#if defined(DEBUG)
     /*
      * Initialize the serial pin as an output for Serial.print like debugging
      */
@@ -236,13 +236,13 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
     pinMode(TONE_PIN_INVERTED, OUTPUT);
     pinMode(TONE_PIN, OUTPUT);
-#ifdef ALARM_TEST
+#if defined(ALARM_TEST)
     pinMode(ALARM_TEST_PIN, INPUT_PULLUP);
 #endif
 
     sBODLevelIsBelow2_7 = (getBODLevelFuses() >= 6);
 
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.println(F("START " __FILE__ "\nVersion " VERSION " from " __DATE__ "\nAlarm delay = " STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes"));
 
     Serial.print(F("Brown Out Detection is "));
@@ -260,7 +260,7 @@ void setup() {
     Serial.println(F(" micro Ampere sleep current"));
 #endif
 
-#ifdef TRACE
+#if defined(TRACE)
     Serial.print(F("MCUSR=0x"));
     Serial.println(sMCUSRStored, HEX);
     Serial.print(F("WDTCR=0x"));
@@ -284,17 +284,17 @@ void setup() {
     /*
      * Signal power on with a single tone or signal reset with a double click.
      */
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.print(F("Booting from "));
 #endif
     if (sMCUSRStored & _BV(PORF)) {
         PWMtone(OPEN_WINDOW_ALARM_FREQUENCY_HIGH, 100);
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.println(F("power up"));
 #endif
     } else {
         playDoubleClick();
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.println(F("reset"));
 #endif
     }
@@ -312,9 +312,9 @@ void setup() {
         delayMilliseconds(200);
     }
 
-#ifdef ALARM_TEST
+#if defined(ALARM_TEST)
     if (!digitalRead(ALARM_TEST_PIN)) {
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.println(F("Test signal out"));
 #endif
         alarm();
@@ -379,7 +379,7 @@ void loop() {
      */
     && (sTemperatureArray[0] < sTemperatureArray[TEMPERATURE_ARRAY_SIZE - 2])) {
         // Start from beginning, clear temperature array
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.println(F("Detected porting to a colder place -> reset"));
 #endif
         resetHistory();
@@ -391,7 +391,7 @@ void loop() {
              */
             // tTemperatureOldSum can be 0 -> do not use tTemperatureNewSum < tTemperatureOldSum - (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT)
             if (sTemperatureNewSum + (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT) < sTemperatureOldSum) {
-#ifdef DEBUG
+#if defined(DEBUG)
                 Serial.println(F("Detected window just opened -> check again in " STR(OPEN_WINDOW_ALARM_DELAY_MINUTES) " minutes"));
 #endif
                 sTemperatureMinimumAfterWindowOpen = sTemperatureNewSum;
@@ -406,7 +406,7 @@ void loop() {
              */
             if (sTemperatureNewSum > (sTemperatureMinimumAfterWindowOpen + TEMPERATURE_COMPARE_AMOUNT)) {
                 sOpenWindowDetected = false;
-#ifdef DEBUG
+#if defined(DEBUG)
                 Serial.println(F("Detected window already closed -> start again"));
 #endif
                 // reset history in order to avoid a new detection at next sample, since tTemperatureNewSum may still be lower than tTemperatureOldSum
@@ -432,14 +432,14 @@ void loop() {
                         /*
                          * Window is still open -> ALARM
                          */
-#ifdef DEBUG
+#if defined(DEBUG)
                         Serial.println(F("Detected window still open -> alarm"));
 #endif
                         alarm();
                     } else {
                         // Temperature not 1 degree lower than temperature at time of open detection
                         sOpenWindowDetected = false;
-#ifdef DEBUG
+#if defined(DEBUG)
                         Serial.println(F("Assume wrong window open detection -> start again"));
 #endif
                     }
@@ -490,7 +490,7 @@ void PWMtone(unsigned int aFrequency, unsigned int aDurationMillis) {
  * plays alarm signal for the specified seconds
  */
 void playAlarmSignalSeconds(uint16_t aSecondsToPlay) {
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.print(F("Play alarm for "));
     Serial.print(aSecondsToPlay);
     Serial.println(F(" seconds"));
@@ -547,7 +547,7 @@ void readTempAndManageHistory() {
     sTemperatureArray[0] = readADCChannelWithReferenceOversample(ADC_TEMPERATURE_CHANNEL_MUX, INTERNAL1V1, 4);
     sTemperatureNewSum += sTemperatureArray[0];
 
-#ifdef DEBUG
+#if defined(DEBUG)
     // needs 4.4 ms
     Serial.print(F("Temp="));
     Serial.print(sTemperatureArray[0]);
@@ -564,7 +564,7 @@ void readTempAndManageHistory() {
 bool checkForTemperatureRising() {
     if (sTemperatureArray[TEMPERATURE_ARRAY_SIZE - 1] != 0
             && sTemperatureNewSum > sTemperatureOldSum + (TEMPERATURE_DELTA_THRESHOLD_DEGREE * TEMPERATURE_COMPARE_AMOUNT)) {
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.println(F("Alarm - detected window already closed -> start again"));
 #endif
         sOpenWindowDetected = false;
@@ -586,7 +586,7 @@ void alarm() {
 // after 80 seconds the new (increased) temperature is stable
 
 // prepare for new temperature check - reset history
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.println(F("After 120 seconds prepare for new temperature check -> reset history"));
     Serial.println(F("Play alarm for 480 seconds and check for rising temperature every 30 seconds"));
 #endif
@@ -604,7 +604,7 @@ void alarm() {
         playAlarmSignalSeconds(30);
     }
 
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.println(F("After 10 minutes continuous alarm play it now for 10 seconds with increasing delay starting at 24 seconds"));
 #endif
 
@@ -614,7 +614,7 @@ void alarm() {
      * The alarm last for 10 minutes now and no rising temperature could be detected in this time, so it makes no sense here.
      */
     while (true) {
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.print(F("Alarm pause for "));
         Serial.print(tDelay);
         Serial.println(F(" seconds"));
@@ -739,7 +739,7 @@ void checkVCCPeriodically() {
     sVCCMonitoringDelayCounter--;
     if (sVCCMonitoringDelayCounter == 0) {
         sVCCVoltageMillivolt = getVCCVoltageMillivolt();
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.print(F("VCC="));
         Serial.print(sVCCVoltageMillivolt);
         Serial.print(F("mV - "));
@@ -813,7 +813,7 @@ bool isBODSFlagExistent() {
     return MCUCR & _BV(BODS);
 }
 
-#ifdef DEBUG
+#if defined(DEBUG)
 /*
  * Output description for all fuses except "DebugWire enabled"
  */

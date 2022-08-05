@@ -15,13 +15,13 @@ Minimal bit-bang send serial
 115200 baud for 1/8/16 MHz ATtiny clock.
 ### Perfect for debugging purposes.
 ### Provides Serial.print / println functions for easy software porting.
-### Code size is only 76 Bytes@38400 baud or 196 Bytes@115200 baud (including first call).
+### Code size is only 76 bytes@38400 baud or 196 bytes@115200 baud (including first call).
 ### Provides additional fast printHex() and printlnHex() functions.
 ### Default TX pin is PB2 on a ATtiny85.
 
-# Version 2
-From this version, ATtinySerialOut.cpp is renamed to ATtinySerialOut.hpp. You should include it once in your main program (.ino file) like done in the examples.
-I you accidently included it more than once, you will see errors like this:
+# Using the new *.hpp files / how to avoid `multiple definitions` linker errors
+In order to support [compile options](#compile-options--macros-for-this-library) more easily, the line `#include <ATtinySerialOut.h>` must be changed to  `#include <ATtinySerialOut.hpp>`, but only in your **main program (.ino file)**, like it is done in the examples.<br/>
+In **all other files** you must use `#include <ATtinySerialOut.h>`, otherwise you will get tons of **"multiple definition"** errors.
 
 ```
 (.text+0x0): multiple definition of `initTXPin()'
@@ -31,16 +31,16 @@ I you accidently included it more than once, you will see errors like this:
 To fix the error, you must rename the include directive in the file mentioned in the error (here: ShowInfo.cpp) from `#include "ATtinySerialOut.hpp"` to `#include "ATtinySerialOut.h"`.
 
 # Compile options / macros for this library
-To customize the library to different requrements, there are some compile options / macros available.<br/>
+To customize the library to different requirements, there are some compile options / macros available.<br/>
 These macros must be defined in your program before the line `#include <TinySerialOut.hpp>` to take effect.<br/>
 Modify them by enabling / disabling them, or change the values if applicable.
 
-| Macro | Default | File | Description |
-|-|-|-|-|
-| `TX_PIN` | PB2 (PA1 for ATtiny87/167) | Before `#include <TinySerialOut.hpp>` | The pin to use for transmitting bit bang serial. |
-| `USE_PORTB_FOR_TX_PIN` | disabled | Before `#include <TinySerialOut.hpp>` | If defined, port B is used for TX pin for ATtiny87/167. |
-| `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | Before `#include <TinySerialOut.hpp>` | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
-| `TINY_SERIAL_INHERIT_FROM_PRINT` | disabled | Before `#include <TinySerialOut.hpp>` | If defined, you can use this class as a replacement for standard Serial as a print class e.g.  for functions like void `prinInfo(Print *aSerial)`. Increases program size. |
+| Name | Default value | Description |
+|-|-|-|
+| `TX_PIN` | PB2 (PA1 for ATtiny87/167) | The pin to use for transmitting bit bang serial. |
+| `USE_PORTB_FOR_TX_PIN` | disabled | If defined, port B is used for TX pin for ATtiny87/167. |
+| `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
+| `TINY_SERIAL_INHERIT_FROM_PRINT` | disabled | If defined, you can use this class as a replacement for standard Serial as a print class e.g.  for functions like void `prinInfo(Print *aSerial)`. Increases program size. |
 
 ### Changing include (*.h) files with Arduino IDE
 First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>

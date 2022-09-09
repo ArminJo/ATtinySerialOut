@@ -38,12 +38,12 @@
 //    RX  6 (0) PA0  1|    |20  PB0 (D8)  0 OC1AU  TONE  Timer 1 Channel A
 //    TX  7 (1) PA1  2|    |19  PB1 (9)  1 OC1BU  Internal LED
 //        8 (2) PA2  3|    |18  PB2 (10) 2 OC1AV  Timer 1 Channel B
-//   INT1 9 (3) PA3  4|    |17  PB3 (11) 4 OC1BV  connected with 51 Ohm to D- and 3.3 volt Zener.
+//   INT1 9 (3) PA3  4|    |17  PB3 (11) 4 OC1BV  connected with 51 ohm to D- and 3.3 volt zener diode.
 //             AVCC  5|    |16  GND
 //             AGND  6|    |15  VCC
 //       10 (4) PA4  7|    |14  PB4 (12) XTAL1
 //       11 (5) PA5  8|    |13  PB5 (13) XTAL2
-//       12 (6) PA6  9|    |12  PB6 (14) 3 INT0  connected with 68 Ohm to D+ (and disconnected 3.3 volt Zener). Is terminated with ~20 kOhm if USB attached :-(
+//       12 (6) PA6  9|    |12  PB6 (14) 3 INT0  connected with 68 ohm to D+ (and disconnected 3.3 volt zener diode). Is terminated with ~20 kOhm if USB attached :-(
 //        5 (7) PA7 10|    |11  PB7 (15) RESET
 //                    +----+
 //

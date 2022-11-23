@@ -1,60 +1,39 @@
+<div align = center>
+
 # [Attiny Serial Out](https://github.com/ArminJo/ATtinySerialOut)
-Available as Arduino library "ATtinySerialOut"
+Minimal bit-bang send serial. 115200 baud for 1/8/16 MHz ATtiny clock.<br/>
 
-### [Version 2.1.1](https://github.com/ArminJo/ATtinySerialOut/archive/master.zip) - work in progress
+[![Badge License: GPLv3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+ &nbsp; &nbsp; 
+[![Badge Version](https://img.shields.io/github/v/release/ArminJo/ATtinySerialOut?include_prereleases&color=yellow&logo=DocuSign&logoColor=white)](https://github.com/ArminJo/ATtinySerialOut/releases/latest)
+ &nbsp; &nbsp; 
+[![Badge Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest?color=yellow)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
+ &nbsp; &nbsp; 
+[![Badge Build Status](https://github.com/ArminJo/ATtinySerialOut/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/ATtinySerialOut/actions)
+ &nbsp; &nbsp; 
+![Badge Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_ATtinySerialOut)
+<br/>
+<br/>
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Installation instructions](https://www.ardu-badge.com/badge/ATtinySerialOut.svg?)](https://www.ardu-badge.com/ATtinySerialOut)
-[![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/ATtinySerialOut/latest)](https://github.com/ArminJo/ATtinySerialOut/commits/master)
-[![Build Status](https://github.com/ArminJo/ATtinySerialOut/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/ATtinySerialOut/actions)
-![Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_ATtinySerialOut)
+Available as [Arduino library "ATtinySerialOut"](https://www.arduinolibraries.info/libraries/a-ttiny-serial-out).
 
+[![Button Install](https://img.shields.io/badge/Install-brightgreen?logoColor=white&logo=GitBook)](https://www.ardu-badge.com/ATtinySerialOut)
+ &nbsp; &nbsp; 
+[![Button Changelog](https://img.shields.io/badge/Changelog-blue?logoColor=white&logo=AzureArtifacts)](https://github.com/ArminJo/ATtinySerialOut#revision-history)
 
-Minimal bit-bang send serial
+</div>
 
-115200 baud for 1/8/16 MHz ATtiny clock.
-### Perfect for debugging purposes.
-### Provides Serial.print / println functions for easy software porting.
-### Code size is only 76 bytes@38400 baud or 196 bytes@115200 baud (including first call).
-### Provides additional fast printHex() and printlnHex() functions.
-### Default TX pin is PB2 on a ATtiny85.
+<br/>
 
-# Using the new *.hpp files / how to avoid `multiple definitions` linker errors
-In order to support [compile options](#compile-options--macros-for-this-library) more easily, the line `#include <ATtinySerialOut.h>` must be changed to  `#include <ATtinySerialOut.hpp>`, but only in your **main program (.ino file)**, like it is done in the examples.<br/>
-In **all other files** you must use `#include <ATtinySerialOut.h>`, otherwise you will get tons of **"multiple definition"** errors.
+# Features
+- Perfect for debugging purposes.
+- Provides Serial.print / println functions for easy software porting.
+- Code size is only 76 bytes@38400 baud or 196 bytes@115200 baud (including first call).
+- Provides additional fast printHex() and printlnHex() functions.
+- Default TX pin is PB2 on a ATtiny85.
 
-```
-(.text+0x0): multiple definition of `initTXPin()'
-.\ShowInfo.cpp.o (symbol from plugin):(.text+0x0): first defined here
-```
-
-To fix the error, you must rename the include directive in the file mentioned in the error (here: ShowInfo.cpp) from `#include "ATtinySerialOut.hpp"` to `#include "ATtinySerialOut.h"`.
-
-# Compile options / macros for this library
-To customize the library to different requirements, there are some compile options / macros available.<br/>
-These macros must be defined in your program **before** the line `#include <TinySerialOut.hpp>` to take effect.<br/>
-Modify them by enabling / disabling them, or change the values if applicable.
-
-| Name | Default value | Description |
-|-|-|-|
-| `TX_PIN` | PB2 (PA1 for ATtiny87/167) | The pin to use for transmitting bit bang serial. |
-| `USE_PORTB_FOR_TX_PIN` | disabled | If defined, port B is used for TX pin for ATtiny87/167. |
-| `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
-| `TINY_SERIAL_INHERIT_FROM_PRINT` | disabled | If defined, you can use this class as a replacement for standard Serial as a print class e.g.  for functions like void `prinInfo(Print *aSerial)`. Increases program size. |
-
-### Changing include (*.h) files with Arduino IDE
-First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
-If you have not yet saved the example as your own sketch, then you are instantly in the right library folder.<br/>
-Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
-In both cases the library source and include files are located in the libraries `src` directory.<br/>
-The modification must be renewed for each new library version!
-
-### Modifying compile options / macros with PlatformIO
-If you are using PlatformIO, you can define the macros in the *[platformio.ini](https://docs.platformio.org/en/latest/projectconf/section_env_build.html)* file with `build_flags = -D MACRO_NAME` or `build_flags = -D MACRO_NAME=macroValue`.
-
-### Modifying compile options / macros with Sloeber IDE
-If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
-![Sloeber settings](https://github.com/Arduino-IRremote/Arduino-IRremote/blob/master/pictures/SloeberDefineSymbols.png)
+<br/>
 
 ## Serial functions provided (linefeed is \n instead of \r\n):
 ```c++
@@ -82,17 +61,50 @@ If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easi
     void println(void);
 ```
 
+<br/>
+
+# Using the new *.hpp files
+In order to support [compile options](#compile-options--macros-for-this-library) more easily,
+the line `#include <ATtinySerialOut.h>` must be changed to  `#include <ATtinySerialOut.hpp>`
+in your main program (aka *.ino file with setup() and loop()).
+
+In **all other files** you must use `#include <ATtinySerialOut.h>`, to **prevent `multiple definitions` linker errors**:
+
+If you forget to include *ATtinySerialOut.hpp*, you will see errors like `ATtinySerialOutExample.cpp:38: undefined reference to `initTXPin()`.
+
+<br/>
+
+# Compile options / macros for this library
+To customize the library to different requirements, there are some compile options / macros available.<br/>
+These macros must be defined in your program **before** the line `#include <TinySerialOut.hpp>` to take effect.<br/>
+Modify them by enabling / disabling them, or change the values if applicable.
+
+| Name | Default value | Description |
+|-|-|-|
+| `TX_PIN` | PB2 (PA1 for ATtiny87/167) | The pin to use for transmitting bit bang serial. |
+| `USE_PORTB_FOR_TX_PIN` | disabled | If defined, port B is used for TX pin for ATtiny87/167. |
+| `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
+| `TINY_SERIAL_INHERIT_FROM_PRINT` | disabled | If defined, you can use this class as a replacement for standard Serial as a print class e.g.  for functions like void `prinInfo(Print *aSerial)`. Increases program size. |
+
+<br/>
+
+# [OpenWindowAlarm example](https://raw.githubusercontent.com/ArminJo/ATtinySerialOut/master/examples/OpenWindowAlarm/OpenWindowAlarm.ino)
+This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
+
+<br/>
+
+# Troubleshooting
 ### Error `call of overloaded 'println(fstr_t*)' is ambiguous`.
 Please use the [new Digistump core](https://github.com/ArminJo/DigistumpArduino#installation). 
 Since version 1.2.0, the library is no longer compatible with the old cores supplied by digistump.
 
-## [OpenWindowAlarm example](https://raw.githubusercontent.com/ArminJo/ATtinySerialOut/master/examples/OpenWindowAlarm/OpenWindowAlarm.ino)
-This example issues an alarm if the chip sensor detect a falling teperarure and is fully documented [here](https://github.com/ArminJo/Arduino-OpenWindowAlarm)
+<br/>
 
 # Revision History
-### Version 2.1.1 - work in progress
+### Version 2.1.1
+- Adjusted macro for MH-ET LIVE Core.
 
-### Version 2.1.0 - work in progress
+### Version 2.1.0
 - Added compile guard.
 - Added `USE_PORTB_FOR_TX_PIN` to allow TX pin on port B for ATtiny87/167.
 - Improved #if guard for instance naming.

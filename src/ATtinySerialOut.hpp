@@ -13,7 +13,7 @@
  * Using the Serial.print commands needs 4 bytes extra for each call.
  *
  *
- *  Copyright (C) 2015-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2023  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.
@@ -82,6 +82,20 @@ void write1Start8Data1StopNoParity(uint8_t aValue);
 bool sUseCliSeiForWrite = true;
 
 /*
+ * The Serial Instance!!!
+ */
+// #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
+#if (!defined(UBRRH) && !defined(UBRR0H)) /*AttinyDigisparkCore and AttinyDigisparkCore condition*/ \
+    || USE_SOFTWARE_SERIAL /*AttinyDigisparkCore condition*/\
+    || ((defined(UBRRH) || defined(UBRR0H) || defined(UBRR1H) || defined(LINBRRH)) && !USE_SOFTWARE_SERIAL)/*AttinyDigisparkCore condition for HardwareSerial*/
+// Switch to SerialOut since Serial is already defined
+// or activate line 745 in TinyDebugSerial.h included in AttinyDigisparkCores/src/tiny/WProgram.h at line 24 for AttinyDigisparkCores
+TinySerialOut SerialOut;
+#else
+TinySerialOut Serial;
+#endif
+
+/*
  * Must be called once if pin is not set to output otherwise
  */
 void initTXPin() {
@@ -132,7 +146,7 @@ void writeString(const char *aStringPtr) {
  * Write string residing in program memory (FLASH)
  */
 void writeString_P(const char *aStringPtr) {
-    uint8_t tChar = pgm_read_byte((const uint8_t * ) aStringPtr);
+    uint8_t tChar = pgm_read_byte((const uint8_t* ) aStringPtr);
 // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
 #if defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
@@ -144,7 +158,7 @@ void writeString_P(const char *aStringPtr) {
             write1Start8Data1StopNoParity(tChar);
         }
 #endif
-        tChar = pgm_read_byte((const uint8_t * ) ++aStringPtr);
+        tChar = pgm_read_byte((const uint8_t* ) ++aStringPtr);
     }
 }
 
@@ -153,7 +167,7 @@ void writeString_P(const char *aStringPtr) {
  */
 void writeString(const __FlashStringHelper *aStringPtr) {
     PGM_P tPGMStringPtr = reinterpret_cast<PGM_P>(aStringPtr);
-    uint8_t tChar = pgm_read_byte((const uint8_t * ) aStringPtr);
+    uint8_t tChar = pgm_read_byte((const uint8_t* ) aStringPtr);
 // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
 #if defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
@@ -165,7 +179,7 @@ void writeString(const __FlashStringHelper *aStringPtr) {
             write1Start8Data1StopNoParity(tChar);
         }
 #endif
-        tChar = pgm_read_byte((const uint8_t * ) ++tPGMStringPtr);
+        tChar = pgm_read_byte((const uint8_t* ) ++tPGMStringPtr);
     }
 }
 
@@ -173,7 +187,7 @@ void writeString(const __FlashStringHelper *aStringPtr) {
  * Write string residing in EEPROM space
  */
 void writeString_E(const char *aStringPtr) {
-    uint8_t tChar = eeprom_read_byte((const uint8_t *) aStringPtr);
+    uint8_t tChar = eeprom_read_byte((const uint8_t*) aStringPtr);
     // Comparing with 0xFF is safety net for wrong string pointer
     while (tChar != 0 && tChar != 0xFF) {
 #if defined(USE_ALWAYS_CLI_SEI_GUARD_FOR_OUTPUT)
@@ -185,7 +199,7 @@ void writeString_E(const char *aStringPtr) {
             write1Start8Data1StopNoParity(tChar);
         }
 #endif
-        tChar = eeprom_read_byte((const uint8_t *) ++aStringPtr);
+        tChar = eeprom_read_byte((const uint8_t*) ++aStringPtr);
     }
 }
 
@@ -494,20 +508,6 @@ void TinySerialOut::println() {
 }
 #endif // !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
 
-/*
- * The Serial Instance!!!
- */
-// #if ... to be compatible with ATTinyCores and AttinyDigisparkCores
-#if (!defined(UBRRH) && !defined(UBRR0H)) /*AttinyDigisparkCore and AttinyDigisparkCore condition*/ \
-    || USE_SOFTWARE_SERIAL /*AttinyDigisparkCore condition*/\
-    || ((defined(UBRRH) || defined(UBRR0H) || defined(UBRR1H) || defined(LINBRRH)) && !USE_SOFTWARE_SERIAL)/*AttinyDigisparkCore condition for HardwareSerial*/
-// Switch to SerialOut since Serial is already defined
-// or activate line 745 in TinyDebugSerial.h included in AttinyDigisparkCores/src/tiny/WProgram.h at line 24 for AttinyDigisparkCores
-TinySerialOut SerialOut;
-#else
-TinySerialOut Serial;
-#endif
-
 /********************************
  * Basic serial output function
  *******************************/
@@ -531,7 +531,7 @@ inline void delay4CyclesExact(uint16_t a4Microseconds) {
     );
 }
 
-#if (F_CPU == 1000000) && defined(_USE_115200BAUD) //else smaller code, but only 38400 baud at 1 MHz
+#if (F_CPU == 1000000) && defined(_USE_115200BAUD) // else smaller code, but only 38400 baud at 1 MHz
 /*
  * 115200 baud - 8,680 cycles per bit, 86,8 per byte at 1 MHz
  *

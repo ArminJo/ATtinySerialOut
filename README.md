@@ -94,9 +94,13 @@ This example issues an alarm if the chip sensor detect a falling teperarure and 
 <br/>
 
 # Troubleshooting
-### Error `call of overloaded 'println(fstr_t*)' is ambiguous`.
-Please use the [new Digistump core](https://github.com/ArminJo/DigistumpArduino#installation). 
+### Error `call of overloaded 'println(fstr_t*)' is ambiguous`
+Please use the [new Digistump core](https://github.com/ArminJo/DigistumpArduino#installation).
 Since version 1.2.0, the library is no longer compatible with the old cores supplied by digistump.
+
+### Error `type 'TinySerialOut' is not a base type for type 'TwoWire' using Print::write;`
+Reason: Another class, e.g. ATTinyCore `class TwoWire : public Stream` uses the Print class or a Print method, but Print is normally redefined by ATtinySerialOut.
+You must define TINY_SERIAL_INHERIT_FROM_PRINT before including ATtinySerialOut.hpp, to avoid this error.
 
 <br/>
 

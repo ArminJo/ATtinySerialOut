@@ -1,7 +1,7 @@
 /*
  * ATtinySerialOut.h
  *
- *  Copyright (C) 2015-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2023  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.
@@ -120,6 +120,12 @@
 #define _USE_115200BAUD // to avoid double negations
 #endif
 
+/*
+ * If defined, you can use this class as a replacement for standard Serial as a print class e.g.
+ * for functions where you require a Print class like in void prinInfo(Print *aSerial). Increases program size.
+ */
+//#define TINY_SERIAL_INHERIT_FROM_PRINT
+
 // The same class definition as for plain arduino
 #if not defined(F)
 class __FlashStringHelper;
@@ -212,13 +218,14 @@ public:
 #if defined(DEFAULT_TO_TINY_DEBUG_SERIAL) /*AttinyDigisparkCore condition for defining Serial at line 745 in TinyDebugSerial.h*/ \
     || ((!defined(UBRRH) && !defined(UBRR0H)) || (defined(USE_SOFTWARE_SERIAL) && USE_SOFTWARE_SERIAL)) /*ATTinyCore condition for defining Serial at line 55 in TinySoftwareSerial.h*/\
     || ((defined(UBRRH) || defined(UBRR0H) || (defined(LINBRRH)) && !USE_SOFTWARE_SERIAL)) /*ATTinyCore condition for for defining Serial at line 71ff in HardwareSerial.h*/
-extern TinySerialOut SerialOut; // Name our instance SerialOut since Serial is already defined
-#define Serial SerialOut
+extern TinySerialOut SerialOut; // Name our instance SerialOut since Serial is already declared
+#define Serial SerialOut // Redirect all usages of Serial to our SerialOut instance :-)
 #else
+// No known cores here -> delete possible existent definitions of Serial, before we declare our object (below)
 #  if defined(Serial)
 #undef Serial
 #  endif
-extern TinySerialOut Serial;
+extern TinySerialOut Serial; // if there is no Serial object, we can name the instance of our class Serial :-)
 #endif
 
 #if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)

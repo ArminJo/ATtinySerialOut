@@ -70,6 +70,17 @@
 #define TX_PORT_ADDR 0x0B // PORTD
 #define TX_DDR DDRD
 
+#elif defined(__AVR_ATtiny84__)
+#  if defined(USE_PORTA_FOR_TX_PIN)
+#define TX_PORT PORTA
+#define TX_PORT_ADDR 0x1B
+#define TX_DDR DDRA
+#  else
+#define TX_PORT PORTB
+#define TX_PORT_ADDR 0x18
+#define TX_DDR DDRB
+#  endif
+
 #else
 //  ATtinyX5 here
 #define TX_PORT PORTB

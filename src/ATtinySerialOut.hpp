@@ -8,7 +8,7 @@
  *
  * Using PB2 // (Pin7 on Tiny85) as default TX pin to be compatible with digispark board
  * To change the output pin, add a line "#define TX_PIN ..." before the line #include "TinySerialOut.hpp"
- * or or set it as compiler symbol like "-DTX_PIN PB1".
+ * or or set it as compiler symbol like "-DTX_PIN PIN_PB1".
  *
  * Using the Serial.print commands needs 4 bytes extra for each call.
  *
@@ -51,42 +51,50 @@
 #define PORTB (*(volatile uint8_t *)((0x18) + 0x20))
 #endif
 
-#if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+#if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) // For use with ATTinyCore
 #  if !defined(TX_PORT)
-#    if !defined(USE_PORTB_FOR_TX_PIN)
-#define TX_PORT PORTA
-#define TX_PORT_ADDR 0x02 // from #define PORTA _SFR_IO8(0x02)
-#define TX_DDR DDRA
+#    if TX_PIN == PIN_PA0 || TX_PIN == PIN_PA1 || TX_PIN == PIN_PA2 || TX_PIN == PIN_PA3 \
+    || TX_PIN == PIN_PA4 || TX_PIN == PIN_PA5 || TX_PIN == PIN_PA6 || TX_PIN == PIN_PA7
+#define TX_PORT         PORTA
+#define TX_PORT_ADDR    0x02 // from #define PORTA _SFR_IO8(0x02)
+#define TX_DDR          DDRA
 #    else
-#define TX_PORT PORTB
-#define TX_PORT_ADDR 0x05 // from #define PORTB _SFR_IO8(0x05)
-#define TX_DDR DDRB
+#define TX_PORT         PORTB
+#define TX_PORT_ADDR    0x05 // from #define PORTB _SFR_IO8(0x05)
+#define TX_DDR          DDRB
 #    endif
 #  endif
 
 #elif defined(__AVR_ATtiny88__)
 //  MH-ET LIVE Tiny88(16.0MHz) board
-#define TX_PORT PORTD
-#define TX_PORT_ADDR 0x0B // PORTD
-#define TX_DDR DDRD
+#define TX_PORT         PORTD
+#define TX_PORT_ADDR    0x0B // PORTD
+#define TX_DDR          DDRD
 
-#elif defined(__AVR_ATtiny84__)
-#  if defined(USE_PORTA_FOR_TX_PIN)
-#define TX_PORT PORTA
-#define TX_PORT_ADDR 0x1B
-#define TX_DDR DDRA
+#elif defined(__AVR_ATtiny84__) // For use with ATTinyCore
+#  if TX_PIN == PIN_PA0 || TX_PIN == PIN_PA1 || TX_PIN == PIN_PA2 || TX_PIN == PIN_PA3 \
+    || TX_PIN == PIN_PA4 || TX_PIN == PIN_PA5 || TX_PIN == PIN_PA6 || TX_PIN == PIN_PA7
+#define TX_PORT         PORTA
+#define TX_PORT_ADDR    0x1B
+#define TX_DDR          DDRA
 #  else
-#define TX_PORT PORTB
-#define TX_PORT_ADDR 0x18
-#define TX_DDR DDRB
+#define TX_PORT         PORTB
+#define TX_PORT_ADDR    0x18
+#define TX_DDR          DDRB
 #  endif
 
 #else
 //  ATtinyX5 here
-#define TX_PORT PORTB
-#define TX_PORT_ADDR 0x18 // PORTB
-#define TX_DDR DDRB
+#define TX_PORT         PORTB
+#define TX_PORT_ADDR    0x18 // PORTB
+#define TX_DDR          DDRB
 #endif // defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+
+#if defined(digitalPinToPCMSKbit)
+#define TX_BIT_NUMBER   digitalPinToPCMSKbit(TX_PIN)
+#else
+#define TX_BIT_NUMBER   TX_PIN
+#endif
 
 void write1Start8Data1StopNoParity(uint8_t aValue);
 
@@ -111,9 +119,9 @@ TinySerialOut Serial;
  */
 void initTXPin() {
     // TX_PIN is active LOW, so set it to HIGH initially
-    TX_PORT |= (1 << TX_PIN);
+    TX_PORT |= (1 << TX_BIT_NUMBER);
     // set pin direction to output
-    TX_DDR |= (1 << TX_PIN);
+    TX_DDR |= (1 << TX_BIT_NUMBER);
 }
 
 void write1Start8Data1StopNoParityWithCliSei(uint8_t aValue) {
@@ -692,7 +700,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             :
             [value] "r" ( aValue ),
             [txport] "I" ( TX_PORT_ADDR ),
-            [txpin] "I" ( TX_PIN )
+            [txpin] "I" ( TX_BIT_NUMBER )
     );
 }
 #else
@@ -719,7 +727,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
 void write1Start8Data1StopNoParity(uint8_t aValue) {
     asm volatile
     (
-            "cbi  %[txport] , %[txpin]" "\n\t" // 2    PORTB &= ~(1 << TX_PIN);
+            "cbi  %[txport] , %[txpin]" "\n\t" // 2    PORTB &= ~(1 << TX_BIT_NUMBER);
 #if (F_CPU == 1000000) && !defined(_USE_115200BAUD) // 1 MHz 38400 baud
             // 0 cycles padding to get additional 4 cycles
             //delay4CyclesExact(5); -> 20 cycles
@@ -754,10 +762,10 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "rjmp .+6" "\n\t"// 2
 
             "nop" "\n\t"// 1
-            "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
+            "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_BIT_NUMBER;
             "rjmp .+6" "\n\t"// 2
 
-            "cbi %[txport] , %[txpin]" "\n\t"// 2    PORTB &= ~(1 << TX_PIN);
+            "cbi %[txport] , %[txpin]" "\n\t"// 2    PORTB &= ~(1 << TX_BIT_NUMBER);
             "nop" "\n\t"// 1
             "nop" "\n\t"// 1
             "lsr %[value]" "\n\t"// 1    aValue = aValue >> 1;
@@ -800,7 +808,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             "nop" "\n\t"// 1
 
             // Stop bit
-            "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_PIN;
+            "sbi %[txport] , %[txpin]" "\n\t"// 2    PORTB |= 1 << TX_BIT_NUMBER;
 
 #if (F_CPU == 1000000) && !defined(_USE_115200BAUD) // 1 MHz 38400 baud
             // delay4CyclesExact(4); -> 17 cycles - gives minimum 25 cycles for stop bit
@@ -825,7 +833,7 @@ void write1Start8Data1StopNoParity(uint8_t aValue) {
             :
             [value] "r" ( aValue ),
             [txport] "I" ( TX_PORT_ADDR ) , /* 0x18 is PORTB on Attiny 85 */
-            [txpin] "I" ( TX_PIN )
+            [txpin] "I" ( TX_BIT_NUMBER )
             :
             "r25",
             "r30",
@@ -847,7 +855,7 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
      * C Version here for 38400 baud at 1 MHz Clock. You see, it is simple :-)
      */
 // start bit
-    TX_PORT &= ~(1 << TX_PIN);
+    TX_PORT &= ~(1 << TX_BIT_NUMBER);
     _NOP();
     delay4CyclesExact(4);
 
@@ -858,10 +866,10 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
             // bit=1
             // to compensate for jump at data=0
             _NOP();
-            TX_PORT |= 1 << TX_PIN;
+            TX_PORT |= 1 << TX_BIT_NUMBER;
         } else {
             // bit=0
-            TX_PORT &= ~(1 << TX_PIN);
+            TX_PORT &= ~(1 << TX_BIT_NUMBER);
             // compensate for different cycles of sbrs
             _NOP();
             _NOP();
@@ -882,7 +890,7 @@ void write1Start8Data1StopNoParity_C_Version(uint8_t aValue) {
     _NOP();
 
 // Stop bit
-    TX_PORT |= 1 << TX_PIN;
+    TX_PORT |= 1 << TX_BIT_NUMBER;
 // -8 cycles to compensate for fastest repeated call (1 ret + 1 load + 1 call)
     delay4CyclesExact(4); // gives minimum 25 cycles for stop bit :-)
 }

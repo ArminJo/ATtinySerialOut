@@ -82,7 +82,6 @@ Modify them by enabling / disabling them, or change the values if applicable.
 | Name | Default value | Description |
 |-|-|-|
 | `TX_PIN` | PB2 (PA1 for ATtiny87/167) | The pin to use for transmitting bit bang serial. |
-| `USE_PORTB_FOR_TX_PIN` | disabled | If defined, port B is used for TX pin for ATtiny87/167. |
 | `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
 | `TINY_SERIAL_INHERIT_FROM_PRINT` | disabled | If defined, you can use this class as a replacement for standard Serial as a print class e.g.  for functions like void `prinInfo(Print *aSerial)`. Increases program size. |
 
@@ -105,6 +104,9 @@ You must define TINY_SERIAL_INHERIT_FROM_PRINT before including ATtinySerialOut.
 <br/>
 
 # Revision History
+### Version 2.2.0
+- Usage of ATTinyCore pin numbering scheme e.g. PIN_PB2 and therefore removed `USE_PORTB_FOR_TX_PIN`.
+
 ### Version 2.1.1
 - Adjusted macro for MH-ET LIVE Core.
 

@@ -37,14 +37,12 @@ jobs:
         #
         # Examples: arduino:avr:uno, arduino:avr:leonardo, arduino:avr:nano, arduino:avr:mega
         # arduino:sam:arduino_due_x, arduino:samd:arduino_zero_native"
-        # ATTinyCore:avr:attinyx5:chip=85,clock=1internal, digistump:avr:digispark-tiny, digistump:avr:digispark-pro
+        # ATTinyCore:avr:attinyx5:chip=85,clock=1internal
         # STMicroelectronics:stm32:GenF1:pnum=BLUEPILL_F103C8
         # esp8266:esp8266:huzzah:eesz=4M3M,xtal=80, esp32:esp32:featheresp32:FlashFreq=80
         # You may add a suffix behind the fqbn with "|" to specify one board for e.g. different compile options like arduino:avr:uno|trace
         #############################################################################################################
         arduino-boards-fqbn:
-          - digistump:avr:digispark-tiny:clock=clock1
-          - digistump:avr:digispark-pro
           - ATTinyCore:avr:attinyx8micr:LTO=enable,sketchclock=16external,pinmapping=mhtiny,millis=enabled # Chinese MH-Tiny ATTiny88
           - ATTinyCore:avr:attinyx5:chip=85,clock=1internal
           - ATTinyCore:avr:attinyx4:chip=84,clock=1internal
@@ -52,13 +50,6 @@ jobs:
         # Specify parameters for each board.
         #############################################################################################################
         include:
-          - arduino-boards-fqbn: digistump:avr:digispark-tiny:clock=clock1  # ATtiny85 board @1 MHz
-            platform-url: https://raw.githubusercontent.com/ArminJo/DigistumpArduino/master/package_digistump_index.json
-
-          - arduino-boards-fqbn: digistump:avr:digispark-pro  # ATtiny167 board @16 MHz
-            platform-url: https://raw.githubusercontent.com/ArminJo/DigistumpArduino/master/package_digistump_index.json
-            sketches-exclude: OpenWindowAlarm # Comma separated list of example names to exclude in build
-
           - arduino-boards-fqbn: ATTinyCore:avr:attinyx8micr:LTO=enable,sketchclock=16external,pinmapping=mhtiny,millis=enabled  # ATtiny88 China clone board @16 MHz
             platform-url: http://drazzy.com/package_drazzy.com_index.json
             sketches-exclude: OpenWindowAlarm # Comma separated list of example names to exclude in build

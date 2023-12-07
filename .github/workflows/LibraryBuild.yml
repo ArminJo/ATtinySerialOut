@@ -75,3 +75,4 @@ jobs:
           arduino-board-fqbn: ${{ matrix.arduino-boards-fqbn }}
           platform-url: ${{ matrix.platform-url }}
           sketches-exclude: ${{ matrix.sketches-exclude }}
+          cli-version: 0.33.0 # to avoid errors for ATTinyCore

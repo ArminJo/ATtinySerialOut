@@ -95,7 +95,12 @@
 
 #if !defined(TX_PIN)
 #  if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) // Digispark PRO board
-#define TX_PIN  PIN_PA1 // (package pin 2 / TXD on Tiny167) - can use one of PA0 to PA7here
+#    if defined PIN_PA1
+// ATTinyCore
+#define TX_PIN  PIN_PA1 // (package pin 2 / TXD on Tiny167) - can use one of PA0 to PA7 here
+#    elif defined PA1   //
+#define TX_PIN  PA1     // (package pin 2 / TXD on Tiny167) - can use one of PA0 to PA7 here
+#    endif
 
 #  elif defined(__AVR_ATtiny88__) //  MH-ET LIVE Tiny88(16.0MHz) board
 #define TX_PIN  PIN_PD6 // (board pin 6) - can use one of PD3 to PD7 here
@@ -107,6 +112,7 @@
 #    if defined(DIGISTUMPCORE)
 #define TX_PIN PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
 #    else
+// ATTinyCore
 #define TX_PIN PIN_PB2 // (package pin 7 on Tiny85) - can use one of PB0 to PB4 (+PB5) here
 #    endif
 #  endif

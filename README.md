@@ -31,7 +31,7 @@ Available as [Arduino library "ATtinySerialOut"](https://www.arduinolibraries.in
 - Provides Serial.print / println functions for easy software porting.
 - Code size is only 76 bytes@38400 baud or 196 bytes@115200 baud (including first call).
 - Provides additional fast printHex() and printlnHex() functions.
-- Default TX pin is PB2 on a ATtiny85.
+- Default TX pin is PIN_PB2 on an ATtiny85.
 
 <br/>
 
@@ -80,8 +80,8 @@ These macros must be defined in your program **before** the line `#include <Tiny
 Modify them by enabling / disabling them, or change the values if applicable.
 
 | Name | Default value | Description |
-|-|-|-|
-| `TX_PIN` | PB2 (PA1 for ATtiny87/167) | The pin to use for transmitting bit bang serial. |
+|-|-:|-|
+| `TX_PIN` | PIN_PB2 (PIN_PA1 for ATtiny87/167) | The pin to use for transmitting bit bang serial. These pin names are valid for ATTinyCore and may be different in other cores. |
 | `TINY_SERIAL_DO_NOT_USE_115200BAUD` | disabled | To force using other baud rates. The rates are **38400 baud at 1 MHz** (which has smaller code size) or **230400 baud at 8/16 MHz**. |
 | `TINY_SERIAL_INHERIT_FROM_PRINT` | disabled | If defined, you can use this class as a replacement for standard Serial as a print class e.g.  for functions like void `prinInfo(Print *aSerial)`. Increases program size. |
 
@@ -104,6 +104,9 @@ You must define TINY_SERIAL_INHERIT_FROM_PRINT before including ATtinySerialOut.
 <br/>
 
 # Revision History
+### Version 2.2.1
+- Usage of ATTinyCore pin numbering also for ATtiny167.
+
 ### Version 2.2.0
 - Usage of ATTinyCore pin numbering scheme e.g. PIN_PB2 and therefore removed `USE_PORTB_FOR_TX_PIN`.
 

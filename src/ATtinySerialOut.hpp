@@ -13,7 +13,7 @@
  * Using the Serial.print commands needs 4 bytes extra for each call.
  *
  *
- *  Copyright (C) 2015-2023  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2024  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.
@@ -52,24 +52,40 @@
 #endif
 
 #if defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) // For use with ATTinyCore
-#  if !defined(TX_PORT)
-#    if TX_PIN == PIN_PA0 || TX_PIN == PIN_PA1 || TX_PIN == PIN_PA2 || TX_PIN == PIN_PA3 \
+#  if TX_PIN == PIN_PA0 || TX_PIN == PIN_PA1 || TX_PIN == PIN_PA2 || TX_PIN == PIN_PA3 \
     || TX_PIN == PIN_PA4 || TX_PIN == PIN_PA5 || TX_PIN == PIN_PA6 || TX_PIN == PIN_PA7
 #define TX_PORT         PORTA
 #define TX_PORT_ADDR    0x02 // from #define PORTA _SFR_IO8(0x02)
 #define TX_DDR          DDRA
-#    else
+#  else
 #define TX_PORT         PORTB
 #define TX_PORT_ADDR    0x05 // from #define PORTB _SFR_IO8(0x05)
 #define TX_DDR          DDRB
-#    endif
 #  endif
 
 #elif defined(__AVR_ATtiny88__)
 //  MH-ET LIVE Tiny88(16.0MHz) board
+#  if TX_PIN <= 7
 #define TX_PORT         PORTD
-#define TX_PORT_ADDR    0x0B // PORTD
+#define TX_PORT_ADDR    0x0B // from #define PORTD _SFR_IO8(0x0B)
 #define TX_DDR          DDRD
+#  elif TX_PIN <= 15
+#define TX_PORT         PORTB
+#define TX_PORT_ADDR    0x05
+#define TX_DDR          DDRB
+#  elif TX_PIN <= 22
+#define TX_PORT         PORTC
+#define TX_PORT_ADDR    0x08
+#define TX_DDR          DDRC
+#  elif TX_PIN <= 26
+#define TX_PORT         PORTA
+#define TX_PORT_ADDR    0x0E
+#define TX_DDR          DDRA
+#  else
+#define TX_PORT         PORTC
+#define TX_PORT_ADDR    0x08
+#define TX_DDR          DDRC
+#  endif
 
 #elif defined(__AVR_ATtiny84__) // For use with ATTinyCore
 #  if TX_PIN == PIN_PA0 || TX_PIN == PIN_PA1 || TX_PIN == PIN_PA2 || TX_PIN == PIN_PA3 \

@@ -36,7 +36,7 @@
 #ifndef _ATTINY_SERIAL_OUT_HPP
 #define _ATTINY_SERIAL_OUT_HPP
 
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
+#if defined(__AVR_ATtiny13__) || defined(__AVR_ATtiny13A__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
     || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
     || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) \
     || defined(__AVR_ATtiny88__)
@@ -566,7 +566,7 @@ inline void delay4CyclesExact(uint16_t a4Microseconds) {
     );
 }
 
-#if (F_CPU == 1000000) && defined(_USE_115200BAUD) // else smaller code, but only 38400 baud at 1 MHz
+#if (F_CPU == 1000000) && defined(_USE_115200BAUD) // else around 120 bytes smaller code, but only 38400 baud at 1 MHz
 /*
  * 115200 baud - 8,680 cycles per bit, 86,8 per byte at 1 MHz
  *

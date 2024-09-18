@@ -36,6 +36,7 @@ Available as [Arduino library "ATtinySerialOut"](https://www.arduinolibraries.in
 - Code size is only 76 bytes@38400 baud or 196 bytes@115200 baud (including first call).
 - Provides additional fast printHex() and printlnHex() functions.
 - Default TX pin is PIN_PB2 on an ATtiny85.
+- Currently support for: ATtiny13(A), ATtiny25, ATtiny45, ATtiny85, ATtiny24, ATtiny44, ATtiny84, ATtiny87, ATtiny167 and ATtiny88.
 
 <br/>
 

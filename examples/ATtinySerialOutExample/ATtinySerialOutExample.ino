@@ -34,16 +34,20 @@
 //#else
 //#define TX_PIN PIN_PB2 // (package pin 7 on Tiny85) - can use one of PIN_PB0 to PIN_PB4 (+PIN_PB5) here
 //#endif
+#if defined(__AVR_ATtiny13__) || defined(__AVR_ATtiny13A__)
+#define TINY_SERIAL_DO_NOT_USE_115200BAUD // This saves 120 bytes but sends with only 38400 baud.
+#endif
 
 #include "ATtinySerialOut.hpp"
 
 void setup(void) {
     initTXPin();
-
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_ATTINY_SERIAL_OUT));
 
     writeString("OSCCAL=");
+#if !defined(__AVR_ATtiny13__) && !defined(__AVR_ATtiny13A__)
     writeUnsignedByteHexWithPrefix(OSCCAL);
+#endif
 }
 
 void loop(void) {
@@ -54,10 +58,13 @@ void loop(void) {
      */
     write1Start8Data1StopNoParityWithCliSei('I');
     writeBinary(tIndex);                    // 1 byte binary output
+
+#if !defined(__AVR_ATtiny13__) && !defined(__AVR_ATtiny13A__) // the utoa() function used in writeUnsignedByte etc. requires too much program space!
     writeUnsignedByte(tIndex);              // 1-3 byte ASCII output
     writeUnsignedByteHexWithPrefix(tIndex); // 4 byte output
     writeUnsignedByteHex(tIndex);           // 2 byte output
     write1Start8Data1StopNoParityWithCliSei('\n');
+
     /*
      * Serial.print usage example
      */
@@ -71,7 +78,7 @@ void loop(void) {
     Serial.printHex(tIndex);
     Serial.print(" | ");
     Serial.println(tIndex);
-
+#endif
     tIndex++;
     delay(100);
 }

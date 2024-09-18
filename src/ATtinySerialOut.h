@@ -70,7 +70,7 @@
 #ifndef _ATTINY_SERIAL_OUT_H
 #define _ATTINY_SERIAL_OUT_H
 
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
+#if defined(__AVR_ATtiny13__) || defined(__AVR_ATtiny13A__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
     || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
     || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) \
     || defined(__AVR_ATtiny88__)

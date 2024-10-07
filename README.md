@@ -128,6 +128,10 @@ You must define TINY_SERIAL_INHERIT_FROM_PRINT before including ATtinySerialOut.
 <br/>
 
 # Revision History
+### Version 2.3.1
+- Added operator bool() for "if(!Serial)..."
+- Untested support of ATtiny13
+
 ### Version 2.3.0
 - Support of all ports of ATtiny88 using ATTinyCore numbering scheme.
 

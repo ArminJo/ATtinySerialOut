@@ -1,7 +1,7 @@
 /*
  * ATtinySerialOut.h
  *
- *  Copyright (C) 2015-2023  Armin Joachimsmeyer
+ *  Copyright (C) 2015-2024  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of TinySerialOut https://github.com/ArminJo/ATtinySerialOut.
@@ -76,10 +76,10 @@
     || defined(__AVR_ATtiny88__)
 #include <Arduino.h>
 
-#define VERSION_ATTINY_SERIAL_OUT "2.2.0"
+#define VERSION_ATTINY_SERIAL_OUT "2.3.1"
 #define VERSION_ATTINY_SERIAL_OUT_MAJOR 2
-#define VERSION_ATTINY_SERIAL_OUT_MINOR 2
-#define VERSION_ATTINY_SERIAL_OUT_PATCH 0
+#define VERSION_ATTINY_SERIAL_OUT_MINOR 3
+#define VERSION_ATTINY_SERIAL_OUT_PATCH 1
 // The change log is at the bottom of the file
 
 /*
@@ -195,7 +195,7 @@ public:
 
     // virtual functions of Print class
     size_t write(uint8_t aByte);
-    operator bool(); // To support "while (!Serial); // wait for serial port to connect. Required for Leonardo only
+    operator bool() { return true; } // To support "while (!Serial); // wait for serial port to connect. Required for Leonardo only
 
 #if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
     void print(const __FlashStringHelper *aStringPtr);

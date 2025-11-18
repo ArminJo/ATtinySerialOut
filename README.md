@@ -89,7 +89,7 @@ void loop() {
 
 # Using the new *.hpp files
 In order to support [compile options](#compile-options--macros-for-this-library) more easily,
-the line `#include <ATtinySerialOut.h>` must be changed to  `#include <ATtinySerialOut.hpp>`
+the line `#include <ATtinySerialOut.h>` **must** be changed to  `#include <ATtinySerialOut.hpp>`
 in your main program (aka *.ino file with setup() and loop()).
 
 In **all other files** you must use `#include <ATtinySerialOut.h>`, to **prevent `multiple definitions` linker errors**:
@@ -129,8 +129,8 @@ You must define TINY_SERIAL_INHERIT_FROM_PRINT before including ATtinySerialOut.
 
 # Revision History
 ### Version 2.3.1
-- Added operator bool() for "if(!Serial)..."
-- Untested support of ATtiny13
+- Added operator bool() for "if(!Serial)...".
+- Untested support of ATtiny13.
 
 ### Version 2.3.0
 - Support of all ports of ATtiny88 using ATTinyCore numbering scheme.

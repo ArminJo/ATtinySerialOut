@@ -195,7 +195,7 @@ public:
 
     // virtual functions of Print class
     size_t write(uint8_t aByte);
-    operator bool() { return true; } // To support "while (!Serial); // wait for serial port to connect. Required for Leonardo only
+    operator bool() { return true; } // To support "while (!Serial); // Dummy wait for serial port to be connected.
 
 #if !defined(TINY_SERIAL_INHERIT_FROM_PRINT)
     void print(const __FlashStringHelper *aStringPtr);

@@ -1,18 +1,20 @@
 /*
  * OpenWindowAlarm.cpp
- * This program must run at 1MHz, select Digispark (1mhz – No USB) or equivalent as your board!
+ * This program must run at 1MHz, select Digispark (1mhz - No USB) or equivalent as your board!
  *
  * Overview:
  * Every 24 seconds a sample is taken of the ATtiny internal temperature sensor which has a resolution of 1 degree.
  * If temperature is lower than "old" temperature value, then an alarm is issued 5 minutes later, if "the condition still holds".
- * Detection of an open window is indicated by a longer 20 ms blink and a short click every 24 seconds.
+ * Detection of an open window is indicated by a longer 20 ms flash and a short click every 8 seconds.
  * A low battery (below 3.55 volt for LiPo) is indicated by beeping and flashing LED every 24 seconds. Only the beep (not the flash) is significantly longer than at open window detection.
+ * At startup, the wait time between window open detection and activation of alarm in minutes (`OPEN_WINDOW_ALARM_DELAY_MINUTES`) is indicated by the number of flashes.
+ *  E.g. 5 flashes means 5 minutes between first detection of open window and the alarm.
  *
  * Internal operation:
  * An open window is detected after `TEMPERATURE_COMPARE_AMOUNT * TEMPERATURE_SAMPLE_SECONDS` (48) seconds of reading a temperature with a value of `TEMPERATURE_DELTA_THRESHOLD_DEGREE` (2) lower
  than the temperature `TEMPERATURE_COMPARE_DISTANCE * TEMPERATURE_SAMPLE_SECONDS` (192 seconds-> 3 minutes and 12 seconds) before.
  * The delay is implemented by sleeping 3 times at `SLEEP_MODE_PWR_DOWN` for a period of 8 seconds -the maximum hardware sleep time- to reduce power consumption.
- * If an **open window is detected**, this is indicated by a longer **20 ms blink** and a **short click** every 24 seconds.
+ * If an **open window is detected**, this is indicated by a longer **20 ms flash** and a **short click** every 8 seconds.
  Therefore, the internal sensor has a time of 3 minutes to adjust to the outer temperature in order to capture even small changes in temperature.
  The greater the temperature change the earlier the sensor value will change and detect an open window.
  * `OPEN_WINDOW_ALARM_DELAY_MINUTES` (5) minutes after open window detection the **alarm is activated**.<br/>
@@ -34,7 +36,7 @@
  * For the 6 uA scenario, loop current is 500 times and startup time is negligible => loop adds 5% to 12% to total (lower) power consumption.
  *
  *
- *  Copyright (C) 2018-2019  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-OpenWindowAlarm https://github.com/ArminJo/Arduino-OpenWindowAlarm.
@@ -57,8 +59,8 @@
 #include <Arduino.h>
 
 /*
- * To see serial output, you must select "Digispark (1mhz – No USB)" as Board in the Arduino IDE!
- * And you need TinySerialOut.h + TinySerialOut.cpp in your sketch folder.
+ * To see serial output, you must select "Digispark (1mhz - No USB)" as Board in the Arduino IDE!
+ * For serial output you need the Arduino library "ATtinySerialOut".
  */
 //#define DEBUG // To see serial output with 115200 baud at P2 -
 //#define TRACE // To see more serial output at startup with 115200 baud at P2
@@ -76,18 +78,35 @@
 #include <avr/sleep.h> // required for sleep_enable()
 #include <avr/wdt.h>   // required for WDTO_8S
 
-#define VERSION "1.3.1"
+#define VERSION "1.3.4"
 /*
+ * Version 1.4.0
+ * - Idea: Double press of reset button starts a fixed 3 minutes timer.
+ * - Idea: Great temperature drop over a longer duration also triggers alarm.
+ *
+ * Version 1.3.4
+ * - During detection the period is reduced to 8 seconds.
+ *
+ * Version 1.3.3
+ * - 3. party libs.
+ *
+ * Version 1.3.2
+ * - Adapted MCUSR handling.
+ *
  * Version 1.3.1
  * - Check for closed window happens only the first 10 minutes of alarm.
+ *
  * Version 1.3.0
  * - Changed voltage low detection.
  * - Improved DEBUG output.
+ *
  * Version 1.2.2
  * - Converted to Serial.print.
  * - New PWMTone() without tone().
+ *
  * Version 1.2.1
  * - Fixed bug in check for temperature rising after each alarm.
+ *
  * Version 1.2
  * - Improved sleep, detecting closed window also after start of alarm, reset behavior.
  * - Changed LIPO detection threshold.
@@ -106,8 +125,9 @@ const int OPEN_WINDOW_ALARM_FREQUENCY_VCC_TOO_LOW = 1600; // Use a different fre
 /*
  * Temperature timing
  */
+const uint16_t TEMPERATURE_SAMPLE_SECONDS_FOR_OPEN_WINDOW = 8;  // signal detection more often
 const uint16_t TEMPERATURE_SAMPLE_SECONDS = 24;  // Use multiple of 8 here
-const uint8_t OPEN_WINDOW_SAMPLES = (OPEN_WINDOW_ALARM_DELAY_MINUTES * 60) / TEMPERATURE_SAMPLE_SECONDS;
+const uint8_t OPEN_WINDOW_SAMPLES = (OPEN_WINDOW_ALARM_DELAY_MINUTES * 60) / TEMPERATURE_SAMPLE_SECONDS_FOR_OPEN_WINDOW;
 const uint8_t TEMPERATURE_COMPARE_AMOUNT = 2;   // compare 2 values
 const uint8_t TEMPERATURE_COMPARE_DISTANCE = 8; // 3 minutes and 12 seconds
 // 2. compare for slower decreasing temperatures
@@ -157,9 +177,10 @@ uint16_t sVCCMonitoringDelayCounter; // Counter for VCC monitoring.
 
 //
 // ATMEL ATTINY85
+// On Digispark boards, PB5/USB- and PB3/USB+ are clamped by a 3.7 V Zener to ground. PB3/USB+ has a 1.5k pullup to VCCC.
 //
 //                                +-\/-+
-//          RESET/ADC0 (D5) PB5  1|    |8  Vcc
+//          RESET/ADC0 (D5) PB5  1|    |8  VCC
 // Tone      USB+ ADC3 (D3) PB3  2|    |7  PB2 (D2) INT0/ADC1 - TX Debug output
 // Tone inv. USB- ADC2 (D4) PB4  3|    |6  PB1 (D1) MISO/DO/AIN1/OC0B/OC1A/PCINT1 - (Digispark) LED
 //                          GND  4|    |5  PB0 (D0) OC0A/AIN0 - Alarm Test if connected to ground
@@ -189,7 +210,7 @@ uint8_t sMCUSRStored; // content of MCUSR register at startup
 
 void PWMtone(unsigned int aFrequency, unsigned int aDurationMillis = 0);
 void delayAndSignalOpenWindowDetectionAndLowVCC();
-void alarm();
+void blockingAlarm();
 void playDoubleClick();
 void readTempAndManageHistory();
 void resetHistory();
@@ -300,9 +321,9 @@ void setup() {
     }
 
     /*
-     * Blink LED at startup to show OPEN_WINDOW_MINUTES
+     * Flash LED at startup to show OPEN_WINDOW_ALARM_DELAY_MINUTES
      */
-    delayMilliseconds(1000); // wait extra second after bootloader blink
+    delayMilliseconds(1000); // wait extra second after bootloader flash
     for (int i = 0; i < OPEN_WINDOW_ALARM_DELAY_MINUTES; ++i) {
         // activate LED
         digitalWrite(LED_PIN, 1);
@@ -317,7 +338,7 @@ void setup() {
 #if defined(DEBUG)
         Serial.println(F("Test signal out"));
 #endif
-        alarm();
+        blockingAlarm();
     }
 #endif
 
@@ -435,7 +456,7 @@ void loop() {
 #if defined(DEBUG)
                         Serial.println(F("Detected window still open -> alarm"));
 #endif
-                        alarm();
+                        blockingAlarm();
                     } else {
                         // Temperature not 1 degree lower than temperature at time of open detection
                         sOpenWindowDetected = false;
@@ -457,7 +478,11 @@ void loop() {
     // deactivate LED before sleeping
     digitalWrite(LED_PIN, 0);
 
-    sleepDelay(TEMPERATURE_SAMPLE_SECONDS);
+    if (sOpenWindowDetected) {
+        sleepDelay(TEMPERATURE_SAMPLE_SECONDS_FOR_OPEN_WINDOW);
+    } else {
+        sleepDelay(TEMPERATURE_SAMPLE_SECONDS);
+    }
 }
 
 /*
@@ -579,7 +604,7 @@ bool checkForTemperatureRising() {
  * After 2 minutes the temperature is checked for the remaining 8 minutes if temperature is increasing in order to detect a closed window.
  * Check temperature at each end of break interval to discover closed window, if window was closed during the silent break, but device was not reset.
  */
-void alarm() {
+void blockingAlarm() {
 
 // First 120 seconds - just generate alarm tone
     playAlarmSignalSeconds(120);
